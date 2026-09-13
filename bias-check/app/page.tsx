@@ -88,10 +88,10 @@ export default function Page() {
 
         {checked === null ? (
           <form onSubmit={submit} className="mt-20 sm:mt-28">
-            <label htmlFor="claim" className="block font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.03em] sm:text-7xl">
-              What do you
+            <label htmlFor="claim" className="block font-display text-5xl leading-[0.98] tracking-[-0.025em] sm:text-7xl">
+              <span className="font-medium text-fg/70">What do you</span>
               <br />
-              <span className="brand-text">believe?</span>
+              <span className="brand-text font-extrabold">believe?</span>
             </label>
             <p className="mt-5 max-w-md text-lg text-muted">
               Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
