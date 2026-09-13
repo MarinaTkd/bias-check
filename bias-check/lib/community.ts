@@ -1,6 +1,6 @@
 // Community sign-up: the fields we collect and their allowed values. Shared by the form and the API.
 export const GENDERS = ["Woman", "Man", "Non-binary", "Another gender", "Prefer not to say"] as const;
-export const AGE_RANGES = ["Under 18", "18–24", "25–34", "35–44", "45–54", "55–64", "65+"] as const;
+export const AGE_RANGES = ["18–24", "25–34", "35–44", "45–54", "55–64", "65+"] as const;
 export const ETHNICITIES = [
   "Asian",
   "Black or African descent",
