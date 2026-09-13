@@ -175,6 +175,7 @@ test("parseMember accepts a complete sign-up and rejects anything off-list", asy
   assert.deepEqual(ok, { email: "ana@example.com", gender: "Woman", ageRange: "25–34", ethnicity: "Prefer not to say" });
   assert.equal(parseMember({ email: "not-an-email", gender: "Woman", ageRange: "25–34", ethnicity: "White" }), null);
   assert.equal(parseMember({ email: "a@b.co", gender: "Other", ageRange: "25–34", ethnicity: "White" }), null);
-  assert.equal(parseMember({ email: "a@b.co", gender: "Man", ageRange: "12–17", ethnicity: "White" }), null);
+  assert.equal(parseMember({ email: "a@b.co", gender: "Man", ageRange: "ageless", ethnicity: "White" }), null);
+  assert.ok(parseMember({ email: "a@b.co", gender: "Man", ageRange: "Under 18", ethnicity: "White" }));
   assert.equal(parseMember(null), null);
 });
