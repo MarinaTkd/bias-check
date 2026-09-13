@@ -1,39 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fffbfa;
-  --fg: #1c1a2e;
-  --muted: #6b6480;
-  --faint: #aaa3b8;
-  --line: rgba(251, 113, 133, 0.16);
-  --field: rgba(255, 255, 255, 0.55);
+  /* Charcoal canvas, light grey type, coral -> blush as the single accent. */
+  --bg: #2c2b30;
+  --bg-2: #4f4f51;
+  --fg: #f1f0f2;
+  --muted: #d6d6d6;
+  --faint: #8f8f93;
+  --line: rgba(214, 214, 214, 0.14);
+  --field: rgba(79, 79, 81, 0.5);
 
-  /* Brand: pastel pink -> butter -> ice blue. Blobs and surfaces use the pastels; text and
-     buttons use one notch deeper so they stay legible on white. */
-  --brand-a: #fda4af;
-  --brand-b: #fcd34d;
-  --brand-c: #67e8f9;
-  --brand: linear-gradient(120deg, var(--brand-a), var(--brand-b) 55%, var(--brand-c));
-  /* Foreground accent: golden. Deep amber -> gold -> honey. Text, buttons, focus. */
-  --accent-a: #b45309;
-  --accent-b: #d97706;
-  --accent-c: #f5b301;
-  --brand-deep: linear-gradient(120deg, var(--accent-a), var(--accent-b) 55%, var(--accent-c));
+  --coral: #f58f7c;
+  --blush: #f2c4ce;
+  --brand-a: var(--coral);
+  --brand-b: var(--blush);
+  --brand-c: var(--coral);
+  --brand: linear-gradient(120deg, var(--coral), var(--blush));
+  --brand-deep: var(--brand);
+  --accent-a: var(--coral);
+  --accent-b: var(--coral);
+  --accent-c: var(--blush);
 
-  /* Background blobs default to the brand; a verdict recolours them. */
-  --blob-1: var(--brand-a);
-  --blob-2: var(--brand-c);
-  --blob-3: var(--brand-b);
+  /* Background blobs: coral and blush kept dim on the charcoal; a verdict recolours them. */
+  --blob-1: var(--coral);
+  --blob-2: var(--bg-2);
+  --blob-3: var(--blush);
 
-  --v-false: #e5322d;
-  --v-mostly-false: #f26a21;
-  --v-mixed: #e8a913;
-  --v-mostly-true: #5fae2f;
-  --v-true: #17a65b;
-  --v-unverifiable: #6b7280;
+  --v-false: #e5484d;
+  --v-mostly-false: #f0733a;
+  --v-mixed: #e0a526;
+  --v-mostly-true: #6bb544;
+  --v-true: #2fb673;
+  --v-unverifiable: #7b7b80;
 
   /* Set on <main> when a verdict lands. */
-  --v: var(--accent-b);
+  --v: var(--coral);
 }
 
 @theme inline {
@@ -55,7 +56,7 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid var(--accent-b);
+  outline: 3px solid var(--coral);
   outline-offset: 3px;
 }
 textarea:focus-visible {
@@ -76,8 +77,8 @@ textarea:focus-visible {
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.7;
+  filter: blur(90px);
+  opacity: 0.28;
   transition: background 900ms ease;
   animation: drift 18s ease-in-out infinite alternate;
 }
@@ -106,16 +107,16 @@ textarea:focus-visible {
 }
 .verdict-page {
   --blob-1: var(--v);
-  --blob-2: color-mix(in srgb, var(--v) 60%, var(--brand-c));
-  --blob-3: color-mix(in srgb, var(--v) 60%, var(--brand-b));
+  --blob-2: color-mix(in srgb, var(--v) 40%, var(--bg-2));
+  --blob-3: color-mix(in srgb, var(--v) 60%, var(--blush));
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(28, 26, 46, 0.04), 0 12px 40px -12px rgba(251, 113, 133, 0.2);
+  background: rgba(79, 79, 81, 0.42);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(214, 214, 214, 0.12);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -16px rgba(0, 0, 0, 0.6);
 }
 
 .brand-text {
@@ -128,14 +129,45 @@ textarea:focus-visible {
   background: var(--brand-deep);
 }
 .brand-ring:focus-within {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-b) 25%, transparent);
-  border-color: var(--accent-b);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 30%, transparent);
+  border-color: var(--coral);
 }
 
 /* Verdict block: gradient of the verdict colour with a matching glow. */
 .verdict {
-  background: linear-gradient(135deg, var(--v), color-mix(in srgb, var(--v) 65%, var(--brand-b)));
-  box-shadow: 0 20px 60px -20px color-mix(in srgb, var(--v) 70%, transparent);
+  background: linear-gradient(135deg, var(--v), color-mix(in srgb, var(--v) 70%, var(--blush)));
+  box-shadow: 0 24px 70px -24px color-mix(in srgb, var(--v) 80%, transparent);
+}
+
+/* Hero mosaic: flat tiles in the reference's language. Decorative only. */
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  aspect-ratio: 1;
+}
+.mosaic > b {
+  display: block;
+  border-radius: 6px;
+}
+.mosaic .t-coral {
+  background: linear-gradient(135deg, var(--coral), var(--blush));
+}
+.mosaic .t-blush {
+  background: linear-gradient(315deg, var(--blush), color-mix(in srgb, var(--blush) 40%, var(--coral)));
+}
+.mosaic .t-grey {
+  background: var(--bg-2);
+}
+.mosaic .t-ring {
+  background: radial-gradient(circle, transparent 28%, var(--coral) 30%, transparent 33%, transparent 46%, var(--coral) 48%, transparent 51%);
+  border: 1px solid var(--line);
+}
+.mosaic .t-dots {
+  background: radial-gradient(circle at 30% 70%, var(--coral) 12%, transparent 14%),
+    radial-gradient(circle at 55% 45%, var(--blush) 10%, transparent 12%),
+    radial-gradient(circle at 78% 22%, var(--coral) 8%, transparent 10%);
+  border: 1px solid var(--line);
 }
 
 /* The claim, marked on the verdict block. Strike for false, underline for true,
@@ -173,7 +205,7 @@ textarea:focus-visible {
 }
 
 .shimmer {
-  background: linear-gradient(90deg, rgba(253, 164, 175, 0.25) 0%, rgba(252, 211, 77, 0.35) 50%, rgba(103, 232, 249, 0.25) 100%);
+  background: linear-gradient(90deg, rgba(245, 143, 124, 0.15) 0%, rgba(242, 196, 206, 0.3) 50%, rgba(245, 143, 124, 0.15) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }

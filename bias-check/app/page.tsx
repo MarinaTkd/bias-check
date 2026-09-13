@@ -76,26 +76,35 @@ export default function Page() {
       <div className="mx-auto w-full max-w-3xl">
         <header className="glass flex items-center justify-between rounded-full py-2 pl-3 pr-5">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <span className="brand-bg grid size-7 place-items-center rounded-full text-white" aria-hidden>
+            <span className="brand-bg grid size-7 place-items-center rounded-full text-bg" aria-hidden>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 7.5l3 3 7-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
             Bias Check
           </Link>
-          <span className="hidden font-mono text-xs text-muted sm:inline">{TRUSTED_DOMAINS.length} trusted domains. Nothing else.</span>
+          <span className="hidden font-mono text-xs text-faint sm:inline">{TRUSTED_DOMAINS.length} trusted domains. Nothing else.</span>
         </header>
 
         {checked === null ? (
           <form onSubmit={submit} className="mt-20 sm:mt-28">
-            <label htmlFor="claim" className="block font-display text-5xl leading-[0.98] tracking-[-0.025em] sm:text-7xl">
-              <span className="font-medium text-fg/70">What do you</span>
-              <br />
-              <span className="brand-text font-extrabold">believe?</span>
-            </label>
-            <p className="mt-5 max-w-md text-lg text-muted">
-              Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
-            </p>
+            <div className="flex items-start justify-between gap-8">
+              <div>
+                <label htmlFor="claim" className="block font-display text-5xl leading-[0.98] tracking-[-0.025em] sm:text-7xl">
+                  <span className="font-medium text-muted">What do you</span>
+                  <br />
+                  <span className="brand-text font-extrabold">believe?</span>
+                </label>
+                <p className="mt-5 max-w-md text-lg text-muted/80">
+                  Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
+                </p>
+              </div>
+              <div className="mosaic hidden w-40 shrink-0 sm:grid" aria-hidden>
+                <b className="t-coral" /><b className="t-grey" /><b className="t-ring" />
+                <b className="t-grey" /><b className="t-blush" /><b className="t-grey" />
+                <b className="t-dots" /><b className="t-grey" /><b className="t-coral" />
+              </div>
+            </div>
             <textarea
               id="claim"
               autoFocus
@@ -110,13 +119,13 @@ export default function Page() {
                   submit();
                 }
               }}
-              className="glass brand-ring mt-8 block w-full resize-none rounded-2xl p-5 font-display text-2xl font-medium leading-snug tracking-tight transition placeholder:text-faint focus:outline-none sm:text-3xl [field-sizing:content]"
+              className="glass brand-ring mt-8 block w-full resize-none rounded-2xl p-5 font-display text-2xl font-medium leading-snug tracking-tight transition text-fg placeholder:text-faint focus:outline-none sm:text-3xl [field-sizing:content]"
             />
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <button
                 type="submit"
                 disabled={!ready}
-                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(217,119,6,0.45)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(217,119,6,0.55)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
+                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-bg shadow-[0_10px_30px_-10px_rgba(245,143,124,0.45)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(245,143,124,0.6)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
               >
                 Check it &rarr;
               </button>
@@ -161,7 +170,7 @@ export default function Page() {
             {error && (
               <div role="alert" className="mt-8">
                 <p className="text-lg">{error}</p>
-                <button onClick={reset} className="brand-bg mt-3 rounded-full px-5 py-2 font-display text-sm font-bold text-white">
+                <button onClick={reset} className="brand-bg mt-3 rounded-full px-5 py-2 font-display text-sm font-bold text-bg">
                   Try another belief
                 </button>
               </div>
@@ -234,7 +243,7 @@ export default function Page() {
 
                 <button
                   onClick={reset}
-                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(217,119,6,0.45)] transition hover:scale-[1.03]"
+                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-bg shadow-[0_10px_30px_-10px_rgba(245,143,124,0.45)] transition hover:scale-[1.03]"
                 >
                   Check another belief
                 </button>
