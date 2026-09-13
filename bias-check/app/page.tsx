@@ -116,7 +116,7 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={!ready}
-                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(124,58,237,0.45)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(124,58,237,0.55)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
+                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(217,119,6,0.45)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(217,119,6,0.55)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
               >
                 Check it &rarr;
               </button>
@@ -234,7 +234,7 @@ export default function Page() {
 
                 <button
                   onClick={reset}
-                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(124,58,237,0.45)] transition hover:scale-[1.03]"
+                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(217,119,6,0.45)] transition hover:scale-[1.03]"
                 >
                   Check another belief
                 </button>
