@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CheckResult, Verdict } from "@/lib/factcheck";
 import { TRUSTED_DOMAINS, TRUSTED_SOURCES } from "@/lib/domains";
 
@@ -29,6 +29,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const domainsDialog = useRef<HTMLDialogElement>(null);
 
   const ready = claim.trim().length >= 3 && !loading;
 
@@ -83,8 +84,65 @@ export default function Page() {
             </span>
             Check Your Bias
           </Link>
-          <span className="hidden font-mono text-xs text-faint sm:inline">{TRUSTED_DOMAINS.length} trusted domains. Nothing else.</span>
+          <span className="font-mono text-xs text-faint">
+            <button
+              type="button"
+              onClick={() => domainsDialog.current?.showModal()}
+              className="underline decoration-dotted underline-offset-4 transition hover:text-fg"
+            >
+              {TRUSTED_DOMAINS.length} trusted domains
+            </button>
+            <span className="hidden sm:inline">. Nothing else.</span>
+          </span>
         </header>
+
+        <dialog
+          ref={domainsDialog}
+          onClick={(e) => e.target === e.currentTarget && domainsDialog.current?.close()}
+          className="glass m-auto w-[min(42rem,calc(100vw-2rem))] rounded-3xl p-0 text-fg backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+        >
+          <div className="p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-2xl font-bold tracking-tight">Where the evidence comes from</h2>
+                <p className="mt-1 text-sm text-muted">
+                  Searches are restricted to these {TRUSTED_DOMAINS.length} domains at the API level. Nothing outside this list is read.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => domainsDialog.current?.close()}
+                aria-label="Close"
+                className="grid size-9 shrink-0 place-items-center rounded-full bg-bg-2/60 text-muted transition hover:text-fg"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                  <path d="M2 2l10 10M12 2 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              {TRUSTED_SOURCES.map((g) => (
+                <section key={g.category}>
+                  <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-faint">{g.category}</h3>
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {g.domains.map((d) => (
+                      <li key={d}>
+                        <a
+                          href={`https://${d}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block rounded-full border border-line bg-bg-2/50 px-2.5 py-1 font-mono text-xs text-muted transition hover:border-coral hover:text-fg"
+                        >
+                          {d}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </div>
+        </dialog>
 
         {checked === null ? (
           <form onSubmit={submit} className="mt-20 sm:mt-28">

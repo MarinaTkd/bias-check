@@ -44,6 +44,8 @@
   --color-faint: var(--faint);
   --color-line: var(--line);
   --color-field: var(--field);
+  --color-bg-2: var(--bg-2);
+  --color-coral: var(--coral);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
