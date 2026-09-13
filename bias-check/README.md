@@ -29,21 +29,54 @@ set `BIAS_CHECK_MODEL=claude-sonnet-5` in `.env.local` if cost matters more than
 When a verdict is UNVERIFIABLE the result offers "Ask the community". The community isn't live yet,
 so the dialog explains how it will work and collects sign-ups: email plus gender, age range and
 ethnicity, each with a "Prefer not to say" option, so future answers can be shown by group rather
-than by person. `POST /api/community` validates every field against the allow-lists in
-`lib/community.ts` and appends to `data/community.jsonl`, which is git-ignored. That file holds
-personal data and only survives on a persistent disk. Move it to a database before deploying
-anywhere with an ephemeral filesystem.
+than by person. `POST /api/community` validates every field against the allow-lists in `lib/community.ts`, requires
+an explicit consent tick, and stores the sign-up in Redis.
 
 ## Sharing a result
 
-Every completed check is saved to `data/results/<id>.json` under a 16-character random id, and the
+Every completed check is saved under a 16-character random id, and the
 result view offers a Share button. On devices with a share sheet it opens the usual share options;
 elsewhere it copies the link, and if the clipboard is blocked it shows the link to copy by hand.
 The recipient opens `/r/<id>` and sees the same verdict, summary and sources. Results are reachable
 by link only and are marked `noindex`; nothing lists them.
 
-Like the community sign-ups, this storage is a local-file shortcut that needs a persistent disk.
-Move it to a database before deploying anywhere with an ephemeral filesystem.
+
+## Storage
+
+All state lives in one Upstash Redis database: shared results (`result:<id>`), community sign-ups
+(`community`), the result cache (`cache:<claim>`, 30 days), the rate-limit counters (`rl:ip:…`,
+`rl:global:…`) and the monthly budget counter (`budget:<YYYY-MM>`). Nothing is written to disk, so
+the app runs unchanged on a read-only filesystem.
+
+Without `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` the app falls back to in-memory
+storage and logs a warning. That is fine for local development and for the tests, but everything is
+lost when the process restarts.
+
+## Cost controls
+
+A new check costs about $0.14 on Claude Opus 5; cached repeats are free and are served before any
+limit is counted. Four limits apply, the first three configurable by environment variable:
+
+| Limit | Default | Variable |
+|---|---|---|
+| Per person, per day | 3 | `PER_IP_DAILY_LIMIT` |
+| Everyone, per day | 12 | `GLOBAL_DAILY_LIMIT` |
+| New checks per month | 140 (about $20) | `MONTHLY_CHECK_BUDGET` |
+| Hard spend limit | set by hand in the Anthropic console | — |
+
+## Deploying to Vercel
+
+1. Create a Redis database at [console.upstash.com](https://console.upstash.com) and copy its REST
+   URL and token.
+2. Push this repository to GitHub, then import it at [vercel.com/new](https://vercel.com/new) and
+   **set the root directory to `bias-check`**.
+3. Add `ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` as environment
+   variables for all environments, plus any limits you want to change.
+4. Deploy, then set `NEXT_PUBLIC_SITE_URL` to the address Vercel gives you and redeploy, so shared
+   links preview correctly.
+5. Set a hard monthly spend limit in the Anthropic console as a backstop.
+6. Put a real contact address on the privacy page: replace `SET_CONTACT_EMAIL_BEFORE_LAUNCH` in
+   `app/privacy/page.tsx`. Deletion requests have to reach someone.
 
 ## Editing the trusted-source list
 
