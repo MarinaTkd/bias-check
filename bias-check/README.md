@@ -20,9 +20,9 @@ Requires Node 23.6+ (24 recommended).
 
 ## Model and cost
 
-Checks run on `claude-sonnet-5` at medium effort with up to 4 web searches, about $0.05 per new claim
-(measured; Opus 5 gave the same verdicts at roughly $0.14). Set `BIAS_CHECK_MODEL=claude-opus-5` in
-`.env.local` to use the heavier model. Repeated claims are served from an in-memory cache and cost nothing.
+Checks run on `claude-opus-5` at medium effort with up to 4 web searches, about $0.14 per new claim
+(measured). Sonnet 5 reaches the same verdicts at about $0.04 but its summaries are noticeably vaguer;
+set `BIAS_CHECK_MODEL=claude-sonnet-5` in `.env.local` if cost matters more than specificity. Repeated claims are served from an in-memory cache and cost nothing.
 
 ## Editing the trusted-source list
 

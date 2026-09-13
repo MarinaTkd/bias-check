@@ -39,14 +39,27 @@ export function parseVerdict(text: string): { verdict: Verdict; summary: string;
 type CitationLike = { type: string; url?: string; title?: string | null; cited_text?: string };
 type ContentLike = { type: string; text?: string; citations?: CitationLike[] | null };
 
-// Text blocks separated by tool blocks are separate paragraphs, but the API gives no separator.
-// Prefix such blocks with a newline so the verdict line still starts a line after a preamble.
+// The API splits cited text into blocks and gives no separators, so two fixes on the seams:
+// a text block after a tool block starts a new paragraph (so a verdict line after a preamble
+// still starts a line), and a sentence that runs straight into the next block gets a space,
+// while stray whitespace before punctuation is dropped.
 export function withParagraphBreaks<T extends ContentLike>(blocks: T[]): T[] {
-  let prevWasText = true;
+  let prev: string | null = null; // text of the previous block, null if it was not text
+  let first = true;
   return blocks.map((b) => {
-    const out = b.type === "text" && !prevWasText && typeof b.text === "string" ? { ...b, text: "\n" + b.text } : b;
-    prevWasText = b.type === "text";
-    return out;
+    if (b.type !== "text" || typeof b.text !== "string") {
+      prev = null;
+      return b;
+    }
+    let text = b.text;
+    if (prev === null && !first) text = "\n" + text;
+    else if (prev !== null) {
+      if (/^\s+[,;:.!?]/.test(text)) text = text.replace(/^\s+/, "");
+      else if (/[.!?]$/.test(prev) && /^[A-Za-z0-9"(]/.test(text)) text = " " + text;
+    }
+    prev = text;
+    first = false;
+    return text === b.text ? b : { ...b, text };
   });
 }
 
@@ -100,16 +113,18 @@ const SYSTEM_PROMPT = `You help people test their own beliefs against evidence. 
 
 Research it with the web_search tool. Only the sources the tool returns are permitted; cite them.
 
-Then answer in this exact shape. Write nothing before the verdict line, not even a sentence saying you will research the claim.
+Answer in this exact shape. Write nothing before the verdict line.
 Line 1: "VERDICT: X" where X is exactly one of FALSE, MOSTLY FALSE, MIXED, MOSTLY TRUE, TRUE, UNVERIFIABLE.
-Then a blank line, then 2 to 5 short paragraphs of plain prose.
+Then a blank line, then at most 3 short paragraphs and at most 130 words in total.
 Use no markdown anywhere in the reply, including the verdict line: no asterisks, bold, headings or bullets.
 
-Focus the summary on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, say so plainly and mark it TRUE; do not invent doubt. If the claim is a matter of opinion or cannot be checked, mark it UNVERIFIABLE and explain why. Be direct, specific and non-judgemental about the reader.`;
+Every sentence must carry a specific fact from a source: a number, a sample size, a year, a named study, institution or dataset. Lead with the single strongest piece of evidence. Cut adjectives, hedging and general statements such as "research shows", "experts agree" or "overwhelmingly"; state the finding itself. Do not explain the history of the belief or how common it is unless that is the evidence. Do not restate the claim.
 
-// Sonnet 5 at medium effort matched Opus 5's verdicts on test claims at ~5x lower cost. Override
-// with BIAS_CHECK_MODEL=claude-opus-5 if you want the heavier model.
-const MODEL = process.env.BIAS_CHECK_MODEL ?? "claude-sonnet-5";
+Focus on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, mark it TRUE and give the supporting data plainly; do not invent doubt. If the claim is opinion or cannot be checked, mark it UNVERIFIABLE and say in one sentence why. Never comment on the reader.`;
+
+// Opus 5 at medium effort gave noticeably more specific, data-dense summaries than Sonnet 5 on
+// test claims (~$0.14 vs ~$0.04 per new claim). Override with BIAS_CHECK_MODEL=claude-sonnet-5.
+const MODEL = process.env.BIAS_CHECK_MODEL ?? "claude-opus-5";
 
 // Throws Error("refused") if the model declined the request, or Error("incomplete") if
 // research was still pausing/compacting after the continuation cap, hit max_tokens or the

@@ -153,3 +153,17 @@ test("withParagraphBreaks lets a verdict after a preamble and a tool call start 
     { text: " More.", refs: [] },
   ]);
 });
+
+test("withParagraphBreaks repairs seams between cited blocks", () => {
+  const blocks = withParagraphBreaks([
+    { type: "text", text: "VERDICT: FALSE\n\nA trial of 23 studies found nothing." },
+    { type: "text", text: "A 1994 trial randomized 48 children", citations: [] },
+    { type: "text", text: "\n\n, finding no effect." },
+    { type: "text", text: " Observational links exist." },
+  ]);
+  const text = blocks.map((b) => b.text).join("");
+  assert.equal(
+    text,
+    "VERDICT: FALSE\n\nA trial of 23 studies found nothing. A 1994 trial randomized 48 children, finding no effect. Observational links exist.",
+  );
+});
