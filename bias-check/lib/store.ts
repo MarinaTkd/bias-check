@@ -69,16 +69,21 @@ function redisStore(redis: Redis): Store {
   };
 }
 
-let fallback: Store | null = null;
+// Next bundles route handlers and server components separately, so a module-level variable is
+// NOT one value per process. The fallback hangs off globalThis so an API route and a page see the
+// same data in development; with Redis both bundles talk to the same database anyway.
+const FALLBACK = Symbol.for("bias-check.store.fallback");
+type WithFallback = typeof globalThis & { [FALLBACK]?: Store };
 
 export function getStore(): Store {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) return redisStore(new Redis({ url, token }));
   // Local development and tests: state lives for the life of the process only.
-  if (!fallback) {
+  const g = globalThis as WithFallback;
+  if (!g[FALLBACK]) {
     console.warn("[bias-check] no Redis credentials; using in-memory storage (data is lost on restart)");
-    fallback = memoryStore();
+    g[FALLBACK] = memoryStore();
   }
-  return fallback;
+  return g[FALLBACK];
 }

@@ -78,7 +78,8 @@ export default function Page({
   async function join(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setJoinState("sending");
-    const data = Object.fromEntries(new FormData(e.currentTarget));
+    const form = new FormData(e.currentTarget);
+    const data = { ...Object.fromEntries(form), consent: form.get("consent") === "on" };
     try {
       const res = await fetch("/api/community", {
         method: "POST",
@@ -284,6 +285,16 @@ export default function Page({
                     {joinState.error}
                   </p>
                 )}
+                <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted">
+                  <input type="checkbox" name="consent" required className="mt-0.5 size-4 shrink-0 accent-[var(--coral)]" />
+                  <span>
+                    I agree to Check Your Bias storing my email and the answers above, so it can tell me when the
+                    community opens and group answers by demographic. I can ask for them to be deleted at any time.{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                      Privacy notice
+                    </a>
+                  </span>
+                </label>
                 <button
                   type="submit"
                   disabled={joinState === "sending"}
