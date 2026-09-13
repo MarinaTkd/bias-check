@@ -33,7 +33,7 @@ export default function Privacy() {
 
       <h2 className="mt-8 font-display text-xl font-bold">Contact</h2>
       <p className="mt-2 leading-relaxed text-muted">
-        Email <span className="font-mono">SET_CONTACT_EMAIL_BEFORE_LAUNCH</span> for access or deletion requests.
+        Email <span className="font-mono">helen-baranova@seznam.cz</span> for access or deletion requests.
       </p>
     </main>
   );

@@ -39,6 +39,7 @@ export default function Page({
   const [result, setResult] = useState<CheckResult | null>(initialResult ?? null);
   const [error, setError] = useState<string | null>(null);
   const [resultId, setResultId] = useState<string | null>(initialId ?? null);
+  const [matchedClaim, setMatchedClaim] = useState<string | null>(null);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null); // shown only when copying fails
   const domainsDialog = useRef<HTMLDialogElement>(null);
@@ -55,6 +56,7 @@ export default function Page({
     setLoading(true);
     setResult(null);
     setResultId(null);
+    setMatchedClaim(null);
     setError(null);
     try {
       const res = await fetch("/api/check", {
@@ -67,6 +69,7 @@ export default function Page({
       else {
         setResult(data);
         setResultId(typeof data.id === "string" ? data.id : null);
+        setMatchedClaim(typeof data.matchedClaim === "string" ? data.matchedClaim : null);
       }
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
@@ -119,6 +122,7 @@ export default function Page({
     setChecked(null);
     setResult(null);
     setResultId(null);
+    setMatchedClaim(null);
     setShareNote(null);
     setShareUrl(null);
     setError(null);
@@ -416,6 +420,11 @@ export default function Page({
 
             {result && (
               <>
+                {matchedClaim && (
+                  <p className="rise mt-8 max-w-[40rem] border-l-2 border-line pl-4 text-sm leading-relaxed text-muted" style={{ animationDelay: "150ms" }}>
+                    Answered from a belief someone already checked: &ldquo;{matchedClaim}&rdquo;
+                  </p>
+                )}
                 <div className="rise mt-10 max-w-[40rem] whitespace-pre-wrap text-[1.125rem] leading-[1.6]" style={{ animationDelay: "200ms" }}>
                   {result.segments.map((seg, i) => (
                     <span key={i}>

@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkClaim, type CheckResult } from "@/lib/factcheck";
+import { lookup, remember, type CachedResponse } from "@/lib/cache";
+import { checkClaim } from "@/lib/factcheck";
 import { checkAllowed } from "@/lib/limits";
 import { saveResult } from "@/lib/results";
 import { getStore } from "@/lib/store";
 
 export const maxDuration = 60; // the Vercel Hobby ceiling
-
-type CheckResponse = CheckResult & { id: string };
-
-const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60;
-
-function cacheKey(claim: string) {
-  return `cache:${claim.toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "").trim()}`;
-}
 
 // Vercel sets x-forwarded-for; its last entry is the one Vercel itself observed, so a client
 // cannot mint a fresh allowance by sending a header of its own.
@@ -37,12 +30,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Claim must be 3–500 characters." }, { status: 400 });
   }
 
-  // Cached claims cost nothing, so they are served before any limit is counted.
-  const key = cacheKey(claim);
-  const hit = await store.get<CheckResponse>(key);
+  // Cached answers cost nothing, so they are served before any limit is counted. This also
+  // matches a rephrasing of something already answered, which is where most of the saving is.
+  const hit = await lookup(claim, store);
   if (hit) {
-    console.log(`[bias-check] cache hit claim=${JSON.stringify(claim.slice(0, 120))}`);
-    return NextResponse.json(hit);
+    console.log(`[bias-check] cache hit${hit.matchedClaim ? " (similar claim)" : ""} claim=${JSON.stringify(claim.slice(0, 120))}`);
+    return NextResponse.json({ ...hit.response, matchedClaim: hit.matchedClaim });
   }
 
   const allowed = await checkAllowed(clientIp(req), store);
@@ -54,8 +47,8 @@ export async function POST(req: NextRequest) {
   try {
     const result = await checkClaim(claim);
     const id = await saveResult(claim, result, store);
-    const response: CheckResponse = { ...result, id };
-    await store.set(key, response, CACHE_TTL_SECONDS);
+    const response: CachedResponse = { ...result, id };
+    await remember(claim, response, store);
     return NextResponse.json(response);
   } catch (e) {
     if (e instanceof Error && e.message === "refused") {

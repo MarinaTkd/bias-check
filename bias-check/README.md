@@ -54,8 +54,15 @@ lost when the process restarts.
 
 ## Cost controls
 
-A new check costs about $0.14 on Claude Opus 5; cached repeats are free and are served before any
-limit is counted. Four limits apply, the first three configurable by environment variable:
+A new check costs about $0.14 on Claude Opus 5; cached answers are free and are served before any
+limit is counted.
+
+Reuse is not limited to word-for-word repeats. A new claim is first matched exactly, then compared
+against the last 300 cached claims: a cheap local token overlap picks up to five candidates, and
+Claude Haiku decides whether any of them really asks the same thing, for about $0.0003. When one
+does, the reader is shown which earlier belief the answer came from. Two guards keep a reuse from
+showing the wrong answer: claims whose quantities differ are rejected in code before the model is
+asked, and anything other than a clear match is treated as a miss. Four limits apply, the first three configurable by environment variable:
 
 | Limit | Default | Variable |
 |---|---|---|
