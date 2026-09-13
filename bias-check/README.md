@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bias Check
 
-## Getting Started
+Type a claim you believe. The site researches it against an allow-list of trustworthy sources
+(peer-reviewed journals, health and science agencies, statistics offices, wire services,
+fact-checkers) and returns a verdict, a plain-language summary focused on the evidence against
+the claim, and the sources it cited. If the claim is right, it says so.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Requires Node 23.6+ (24 recommended).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+    cp .env.local.example .env.local   # then paste your Anthropic API key
+    npm install
+    npm run dev                        # http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    npm test        # unit tests, no network
+    npm run smoke   # one real end-to-end check (spends API credit)
 
-## Learn More
+## Editing the trusted-source list
 
-To learn more about Next.js, take a look at the following resources:
+`TRUSTED_DOMAINS` in `lib/factcheck.ts`. Bare hostnames only; subdomains are included automatically; max 64 entries.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Any Node host works. On Vercel: import the repo, set `ANTHROPIC_API_KEY`, and lower
+`maxDuration` in `app/api/check/route.ts` to `60` on the Hobby plan. The rate limiter is
+in-memory; replace it with a shared store if you run more than one instance.
