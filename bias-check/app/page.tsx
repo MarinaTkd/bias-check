@@ -96,7 +96,7 @@ export default function Page() {
                   <span className="brand-text font-extrabold">believe?</span>
                 </label>
                 <p className="mt-5 max-w-md text-lg text-muted/80">
-                  Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
+                  Check your bias.
                 </p>
               </div>
               {/* Müller-Lyer illusion: both lines are the same length. Perception, not measurement. */}
