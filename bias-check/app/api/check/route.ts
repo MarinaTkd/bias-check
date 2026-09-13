@@ -5,14 +5,19 @@ export const maxDuration = 300; // seconds; Vercel Hobby caps at 60 — lower th
 
 // ponytail: in-memory per-IP limiter, resets on restart and is per-instance.
 // Move to Redis/Upstash when running more than one instance.
+// O(IPs) sweep per request to evict expired entries; move to a TTL store with the Redis upgrade.
 const WINDOW_MS = 60 * 60 * 1000;
 const LIMIT = 5;
 const hits = new Map<string, number[]>();
 
 function rateLimited(ip: string): boolean {
   const now = Date.now();
+  for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= LIMIT) return true;
+  if (recent.length >= LIMIT) {
+    hits.set(ip, recent); // drop expired timestamps for this IP
+    return true;
+  }
   recent.push(now);
   hits.set(ip, recent);
   return false;
