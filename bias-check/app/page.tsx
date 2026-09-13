@@ -76,7 +76,7 @@ export default function Page() {
       <div className="mx-auto w-full max-w-3xl">
         <header className="glass flex items-center justify-between rounded-full py-2 pl-3 pr-5">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <span className="brand-bg grid size-7 place-items-center rounded-full text-white" aria-hidden>
+            <span className="brand-bg grid size-7 place-items-center rounded-full text-fg" aria-hidden>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 7.5l3 3 7-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -116,7 +116,7 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={!ready}
-                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(99,102,241,0.7)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(99,102,241,0.8)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
+                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-fg shadow-[0_10px_30px_-10px_rgba(251,113,133,0.6)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(251,113,133,0.7)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
               >
                 Check it &rarr;
               </button>
@@ -161,7 +161,7 @@ export default function Page() {
             {error && (
               <div role="alert" className="mt-8">
                 <p className="text-lg">{error}</p>
-                <button onClick={reset} className="brand-bg mt-3 rounded-full px-5 py-2 font-display text-sm font-bold text-white">
+                <button onClick={reset} className="brand-bg mt-3 rounded-full px-5 py-2 font-display text-sm font-bold text-fg">
                   Try another belief
                 </button>
               </div>
@@ -234,7 +234,7 @@ export default function Page() {
 
                 <button
                   onClick={reset}
-                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(99,102,241,0.7)] transition hover:scale-[1.03]"
+                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-fg shadow-[0_10px_30px_-10px_rgba(251,113,133,0.6)] transition hover:scale-[1.03]"
                 >
                   Check another belief
                 </button>

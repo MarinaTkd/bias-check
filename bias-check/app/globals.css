@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f7f8ff;
-  --fg: #0f1023;
-  --muted: #5a5f7d;
-  --faint: #9a9fc0;
-  --line: rgba(99, 102, 241, 0.14);
+  --bg: #fffbfa;
+  --fg: #1c1a2e;
+  --muted: #6b6480;
+  --faint: #aaa3b8;
+  --line: rgba(251, 113, 133, 0.16);
   --field: rgba(255, 255, 255, 0.55);
 
-  /* Brand gradient: indigo -> violet -> cyan. */
-  --brand-a: #6366f1;
-  --brand-b: #a855f7;
-  --brand-c: #06b6d4;
+  /* Brand: pastel pink -> butter -> ice blue. Blobs and surfaces use the pastels; text and
+     buttons use one notch deeper so they stay legible on white. */
+  --brand-a: #fda4af;
+  --brand-b: #fcd34d;
+  --brand-c: #67e8f9;
   --brand: linear-gradient(120deg, var(--brand-a), var(--brand-b) 55%, var(--brand-c));
+  --brand-deep: linear-gradient(120deg, #fb7185, #f59e0b 55%, #22d3ee);
 
   /* Background blobs default to the brand; a verdict recolours them. */
   --blob-1: var(--brand-a);
@@ -27,7 +29,7 @@
   --v-unverifiable: #6b7280;
 
   /* Set on <main> when a verdict lands. */
-  --v: var(--brand-a);
+  --v: #fb7185;
 }
 
 @theme inline {
@@ -49,7 +51,7 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid var(--brand-a);
+  outline: 3px solid #fb7185;
   outline-offset: 3px;
 }
 textarea:focus-visible {
@@ -71,7 +73,7 @@ textarea:focus-visible {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.45;
+  opacity: 0.7;
   transition: background 900ms ease;
   animation: drift 18s ease-in-out infinite alternate;
 }
@@ -109,11 +111,11 @@ textarea:focus-visible {
   backdrop-filter: blur(18px) saturate(1.4);
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(15, 16, 35, 0.04), 0 12px 40px -12px rgba(79, 70, 229, 0.18);
+  box-shadow: 0 1px 2px rgba(28, 26, 46, 0.04), 0 12px 40px -12px rgba(251, 113, 133, 0.2);
 }
 
 .brand-text {
-  background: var(--brand);
+  background: var(--brand-deep);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -122,8 +124,8 @@ textarea:focus-visible {
   background: var(--brand);
 }
 .brand-ring:focus-within {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-a) 25%, transparent);
-  border-color: var(--brand-a);
+  box-shadow: 0 0 0 4px color-mix(in srgb, #fb7185 30%, transparent);
+  border-color: #fb7185;
 }
 
 /* Verdict block: gradient of the verdict colour with a matching glow. */
@@ -167,7 +169,7 @@ textarea:focus-visible {
 }
 
 .shimmer {
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.22) 50%, rgba(99, 102, 241, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(253, 164, 175, 0.25) 0%, rgba(252, 211, 77, 0.35) 50%, rgba(103, 232, 249, 0.25) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }
