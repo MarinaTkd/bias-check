@@ -99,11 +99,32 @@ export default function Page() {
                   Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
                 </p>
               </div>
-              <div className="mosaic hidden w-40 shrink-0 sm:grid" aria-hidden>
-                <b className="t-coral" /><b className="t-grey" /><b className="t-ring" />
-                <b className="t-grey" /><b className="t-blush" /><b className="t-grey" />
-                <b className="t-dots" /><b className="t-grey" /><b className="t-coral" />
-              </div>
+              {/* Müller-Lyer illusion: both lines are the same length. Perception, not measurement. */}
+              <svg
+                className="hidden w-44 shrink-0 sm:block"
+                viewBox="0 0 176 176"
+                aria-label="Two lines of equal length that appear different because of the arrowheads on their ends"
+                role="img"
+              >
+                <defs>
+                  <linearGradient id="coral" gradientUnits="userSpaceOnUse" x1="28" y1="0" x2="148" y2="0">
+                    <stop offset="0" stopColor="#f58f7c" />
+                    <stop offset="1" stopColor="#f2c4ce" />
+                  </linearGradient>
+                </defs>
+                <rect width="176" height="176" rx="20" fill="var(--bg-2)" />
+                <circle cx="88" cy="88" r="54" fill="none" stroke="var(--line)" />
+                <circle cx="88" cy="88" r="38" fill="none" stroke="var(--line)" />
+                <g stroke="url(#coral)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                  <path d="M40 62h96" />
+                  <path d="M52 50 40 62l12 12M124 50l12 12-12 12" />
+                  <path d="M40 114h96" />
+                  <path d="M28 102l12 12-12 12M148 102l-12 12 12 12" />
+                </g>
+                <text x="88" y="160" textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="var(--faint)" letterSpacing="1.5">
+                  SAME LENGTH
+                </text>
+              </svg>
             </div>
             <textarea
               id="claim"
