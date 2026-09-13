@@ -112,7 +112,6 @@ export default function Page() {
                     <stop offset="1" stopColor="#f2c4ce" />
                   </linearGradient>
                 </defs>
-                <rect width="176" height="176" rx="20" fill="var(--bg-2)" />
                 <circle cx="88" cy="88" r="54" fill="none" stroke="var(--line)" />
                 <circle cx="88" cy="88" r="38" fill="none" stroke="var(--line)" />
                 <g stroke="url(#coral)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none">
