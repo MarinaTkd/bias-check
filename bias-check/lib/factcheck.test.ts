@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseVerdict, extractSources, TRUSTED_DOMAINS } from "./factcheck.ts";
+import { parseVerdict, extractSources, buildSegments, TRUSTED_DOMAINS } from "./factcheck.ts";
 
 test("parseVerdict reads the verdict line and returns the rest as summary", () => {
   const r = parseVerdict("VERDICT: MOSTLY FALSE\n\nVaccines do not cause autism.\n\nSecond paragraph.");
@@ -106,4 +106,32 @@ test("parseVerdict does not match a paragraph that merely starts with the word V
   const r = parseVerdict("Verdict aside, this is prose.\nMore.");
   assert.equal(r.verdict, "UNVERIFIABLE");
   assert.equal(r.summary, "Verdict aside, this is prose.\nMore.");
+});
+
+test("parseVerdict reports where the body starts", () => {
+  const text = "Preamble.\nVERDICT: FALSE\n\nBody.";
+  const r = parseVerdict(text);
+  assert.equal(text.slice(r.bodyStart).trim(), "Body.");
+  assert.equal(parseVerdict("No verdict here.").bodyStart, 0);
+});
+
+test("buildSegments attaches 1-based source numbers to each cited span and skips the verdict line", () => {
+  const cdc = { type: "web_search_result_location", url: "https://cdc.gov/a", title: "CDC", cited_text: "q1" };
+  const who = { type: "web_search_result_location", url: "https://who.int/b", title: "WHO", cited_text: "q2" };
+  const blocks = [
+    { type: "server_tool_use" },
+    { type: "text", text: "VERDICT: FALSE\n\nFirst part. " },
+    { type: "text", text: "Cited sentence one.", citations: [cdc] },
+    { type: "text", text: " Plain middle. " },
+    { type: "text", text: "Cited sentence two.", citations: [who, cdc, who] },
+    { type: "text", text: "\n" },
+  ];
+  const sources = extractSources(blocks);
+  const { bodyStart } = parseVerdict("VERDICT: FALSE\n\nFirst part. Cited sentence one. Plain middle. Cited sentence two.\n");
+  assert.deepEqual(buildSegments(blocks, sources, bodyStart), [
+    { text: "First part. ", refs: [] },
+    { text: "Cited sentence one.", refs: [1] },
+    { text: " Plain middle. ", refs: [] },
+    { text: "Cited sentence two.", refs: [2, 1] },
+  ]);
 });

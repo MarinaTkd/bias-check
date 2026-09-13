@@ -78,14 +78,27 @@ export default function Page() {
             <span className={`inline-block rounded px-3 py-1 text-sm font-bold ${VERDICT_STYLE[result.verdict]}`}>
               {result.verdict}
             </span>
-            <div className="mt-4 whitespace-pre-wrap leading-relaxed">{result.summary}</div>
+            <div className="mt-4 whitespace-pre-wrap leading-relaxed">
+              {result.segments.map((seg, i) => (
+                <span key={i}>
+                  {seg.text}
+                  {seg.refs.map((n) => (
+                    <sup key={n} className="ml-0.5 text-xs">
+                      <a href={`#src-${n}`} className="text-blue-700 no-underline hover:underline" title={result.sources[n - 1]?.title}>
+                        [{n}]
+                      </a>
+                    </sup>
+                  ))}
+                </span>
+              ))}
+            </div>
 
             {result.sources.length > 0 && (
               <>
                 <h2 className="mt-8 text-xl font-semibold">Sources</h2>
                 <ol className="mt-3 list-decimal space-y-4 pl-5">
-                  {result.sources.map((s) => (
-                    <li key={s.url}>
+                  {result.sources.map((s, i) => (
+                    <li key={s.url} id={`src-${i + 1}`} className="scroll-mt-4 target:bg-yellow-50">
                       <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-medium underline">
                         {s.title}
                       </a>

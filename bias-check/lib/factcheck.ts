@@ -2,7 +2,9 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export type Verdict = "FALSE" | "MOSTLY FALSE" | "MIXED" | "MOSTLY TRUE" | "TRUE" | "UNVERIFIABLE";
 export type Source = { url: string; title: string; quote: string };
-export type CheckResult = { verdict: Verdict; summary: string; sources: Source[] };
+// A run of summary text plus the 1-based numbers of the sources that support it (empty = uncited).
+export type Segment = { text: string; refs: number[] };
+export type CheckResult = { verdict: Verdict; summary: string; segments: Segment[]; sources: Source[] };
 
 const VERDICTS: Verdict[] = ["FALSE", "MOSTLY FALSE", "MIXED", "MOSTLY TRUE", "TRUE", "UNVERIFIABLE"];
 
@@ -24,16 +26,52 @@ export const TRUSTED_DOMAINS: string[] = [
   "snopes.com", "factcheck.org", "politifact.com", "fullfact.org",
 ];
 
-export function parseVerdict(text: string): { verdict: Verdict; summary: string } {
+// bodyStart is the offset in `text` where the summary begins (just after the verdict line).
+export function parseVerdict(text: string): { verdict: Verdict; summary: string; bodyStart: number } {
   const m = text.match(/^[\s*#>]*verdict:\s*([a-z][a-z ]*?)[*.!:\s]*(?:\r?\n|$)/im);
-  if (!m || m.index === undefined) return { verdict: "UNVERIFIABLE", summary: text.trim() };
+  if (!m || m.index === undefined) return { verdict: "UNVERIFIABLE", summary: text.trim(), bodyStart: 0 };
   const word = m[1].trim().toUpperCase().replace(/\s+/g, " ");
   const verdict = (VERDICTS as string[]).includes(word) ? (word as Verdict) : "UNVERIFIABLE";
-  return { verdict, summary: text.slice(m.index + m[0].length).trim() };
+  const bodyStart = m.index + m[0].length;
+  return { verdict, summary: text.slice(bodyStart).trim(), bodyStart };
 }
 
 type CitationLike = { type: string; url?: string; title?: string | null; cited_text?: string };
-type ContentLike = { type: string; citations?: CitationLike[] | null };
+type ContentLike = { type: string; text?: string; citations?: CitationLike[] | null };
+
+// Splits the text blocks into segments carrying source numbers, dropping the first `skipChars`
+// characters (the verdict line) and any whitespace-only leading/trailing segments.
+export function buildSegments(blocks: ContentLike[], sources: Source[], skipChars: number): Segment[] {
+  const numberByUrl = new Map(sources.map((s, i) => [s.url, i + 1]));
+  const segments: Segment[] = [];
+  let toSkip = skipChars;
+  for (const b of blocks) {
+    if (b.type !== "text" || typeof b.text !== "string") continue;
+    let text = b.text;
+    if (toSkip > 0) {
+      const cut = Math.min(toSkip, text.length);
+      text = text.slice(cut);
+      toSkip -= cut;
+    }
+    if (!text) continue;
+    const refs: number[] = [];
+    for (const c of b.citations ?? []) {
+      const n = c.url ? numberByUrl.get(c.url) : undefined;
+      if (n && !refs.includes(n)) refs.push(n);
+    }
+    segments.push({ text, refs });
+  }
+  while (segments.length && !segments[0].text.trim() && !segments[0].refs.length) segments.shift();
+  while (segments.length && !segments[segments.length - 1].text.trim() && !segments[segments.length - 1].refs.length) {
+    segments.pop();
+  }
+  if (segments.length) {
+    segments[0] = { ...segments[0], text: segments[0].text.replace(/^\s+/, "") };
+    const last = segments.length - 1;
+    segments[last] = { ...segments[last], text: segments[last].text.replace(/\s+$/, "") };
+  }
+  return segments;
+}
 
 export function extractSources(blocks: ContentLike[]): Source[] {
   const byUrl = new Map<string, Source>();
@@ -108,12 +146,13 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
     .map((b) => b.text)
     .join("");
   if (!text.trim()) throw new Error("incomplete");
-  const { verdict, summary } = parseVerdict(text);
+  const { verdict, summary, bodyStart } = parseVerdict(text);
   const sources = extractSources(blocks);
+  const segments = buildSegments(blocks, sources, bodyStart);
   console.log(
-    `[bias-check] done verdict=${verdict} sources=${sources.length} summaryChars=${summary.length} total=${Date.now() - startedAt}ms`,
+    `[bias-check] done verdict=${verdict} sources=${sources.length} citedSegments=${segments.filter((s) => s.refs.length).length}/${segments.length} summaryChars=${summary.length} total=${Date.now() - startedAt}ms`,
   );
-  return { verdict, summary, sources };
+  return { verdict, summary, segments, sources };
 }
 
 // One line per API round-trip: what the model searched, what came back, how it stopped, what it cost.
