@@ -34,6 +34,17 @@ than by person. `POST /api/community` validates every field against the allow-li
 personal data and only survives on a persistent disk. Move it to a database before deploying
 anywhere with an ephemeral filesystem.
 
+## Sharing a result
+
+Every completed check is saved to `data/results/<id>.json` under a 16-character random id, and the
+result view offers a Share button. On devices with a share sheet it opens the usual share options;
+elsewhere it copies the link, and if the clipboard is blocked it shows the link to copy by hand.
+The recipient opens `/r/<id>` and sees the same verdict, summary and sources. Results are reachable
+by link only and are marked `noindex`; nothing lists them.
+
+Like the community sign-ups, this storage is a local-file shortcut that needs a persistent disk.
+Move it to a database before deploying anywhere with an ephemeral filesystem.
+
 ## Editing the trusted-source list
 
 `TRUSTED_DOMAINS` in `lib/factcheck.ts`. Bare hostnames only; subdomains are included automatically; max 64 entries.

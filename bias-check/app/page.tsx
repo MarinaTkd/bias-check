@@ -24,14 +24,23 @@ function hostOf(url: string) {
   }
 }
 
-export default function Page() {
+export default function Page({
+  initialClaim,
+  initialResult,
+  initialId,
+}: {
+  initialClaim?: string;
+  initialResult?: CheckResult;
+  initialId?: string;
+} = {}) {
   const [claim, setClaim] = useState("");
-  const [checked, setChecked] = useState<string | null>(null);
+  const [checked, setChecked] = useState<string | null>(initialClaim ?? null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CheckResult | null>(null);
+  const [result, setResult] = useState<CheckResult | null>(initialResult ?? null);
   const [error, setError] = useState<string | null>(null);
-  const [resultId, setResultId] = useState<string | null>(null);
+  const [resultId, setResultId] = useState<string | null>(initialId ?? null);
   const [shareNote, setShareNote] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null); // shown only when copying fails
   const domainsDialog = useRef<HTMLDialogElement>(null);
   const communityDialog = useRef<HTMLDialogElement>(null);
   const [joinState, setJoinState] = useState<"idle" | "sending" | "joined" | { error: string }>("idle");
@@ -95,11 +104,13 @@ export default function Page() {
       }
       await navigator.clipboard.writeText(url);
       setShareNote("Link copied");
+      setTimeout(() => setShareNote(null), 2000);
     } catch {
-      // A cancelled share sheet throws AbortError; say nothing in that case.
-      if (!navigator.share) setShareNote("Couldn't copy the link");
+      // A cancelled share sheet throws AbortError, so say nothing there. A blocked clipboard
+      // (no permission, or a page served over plain http) would otherwise be a dead end, so
+      // show the link for the person to copy by hand.
+      if (!navigator.share) setShareUrl(url);
     }
-    setTimeout(() => setShareNote(null), 2000);
   }
 
   function reset() {
@@ -108,6 +119,7 @@ export default function Page() {
     setResult(null);
     setResultId(null);
     setShareNote(null);
+    setShareUrl(null);
     setError(null);
   }
 
@@ -489,6 +501,18 @@ export default function Page() {
                   <span className="font-mono text-xs text-muted" aria-live="polite">
                     {shareNote}
                   </span>
+                  {shareUrl && (
+                    <label className="flex w-full items-center gap-2 text-xs text-muted">
+                      <span className="shrink-0">Copy this link:</span>
+                      <input
+                        readOnly
+                        value={shareUrl}
+                        ref={(el) => el?.select()}
+                        onFocus={(e) => e.currentTarget.select()}
+                        className="min-w-0 flex-1 rounded-lg border border-line bg-bg-2/50 px-2 py-1 font-mono text-xs text-fg"
+                      />
+                    </label>
+                  )}
                 </div>
               </>
             )}
