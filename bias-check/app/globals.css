@@ -1,12 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #ffffff;
-  --fg: #0b0b0f;
-  --muted: #5f6470;
-  --faint: #9a9fab;
-  --line: #e6e7eb;
-  --field: #f3f4f6;
+  --bg: #f7f8ff;
+  --fg: #0f1023;
+  --muted: #5a5f7d;
+  --faint: #9a9fc0;
+  --line: rgba(99, 102, 241, 0.14);
+  --field: rgba(255, 255, 255, 0.55);
+
+  /* Brand gradient: indigo -> violet -> cyan. */
+  --brand-a: #6366f1;
+  --brand-b: #a855f7;
+  --brand-c: #06b6d4;
+  --brand: linear-gradient(120deg, var(--brand-a), var(--brand-b) 55%, var(--brand-c));
+
+  /* Background blobs default to the brand; a verdict recolours them. */
+  --blob-1: var(--brand-a);
+  --blob-2: var(--brand-c);
+  --blob-3: var(--brand-b);
 
   --v-false: #e5322d;
   --v-mostly-false: #f26a21;
@@ -15,9 +26,8 @@
   --v-true: #17a65b;
   --v-unverifiable: #6b7280;
 
-  /* Set on <main> when a verdict lands; the page tints toward it. */
-  --v: transparent;
-  --tint: color-mix(in srgb, var(--v) 7%, var(--bg));
+  /* Set on <main> when a verdict lands. */
+  --v: var(--brand-a);
 }
 
 @theme inline {
@@ -39,17 +49,87 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid var(--fg);
+  outline: 3px solid var(--brand-a);
   outline-offset: 3px;
 }
 textarea:focus-visible {
   outline: none;
 }
 
-/* The page reacts to the verdict. */
-.tinted {
-  background: linear-gradient(var(--tint), var(--bg) 70vh);
-  transition: background 600ms ease;
+/* Aurora background: three blurred blobs that drift slowly and take the verdict's colour. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after,
+.aurora > i {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  transition: background 900ms ease;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+.aurora::before {
+  width: 55vw;
+  height: 55vw;
+  top: -20vw;
+  left: -12vw;
+  background: var(--blob-1);
+}
+.aurora::after {
+  width: 45vw;
+  height: 45vw;
+  top: 10vh;
+  right: -15vw;
+  background: var(--blob-2);
+  animation-delay: -6s;
+}
+.aurora > i {
+  width: 40vw;
+  height: 40vw;
+  bottom: -18vw;
+  left: 25vw;
+  background: var(--blob-3);
+  animation-delay: -12s;
+}
+.verdict-page {
+  --blob-1: var(--v);
+  --blob-2: color-mix(in srgb, var(--v) 60%, var(--brand-c));
+  --blob-3: color-mix(in srgb, var(--v) 60%, var(--brand-b));
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(15, 16, 35, 0.04), 0 12px 40px -12px rgba(79, 70, 229, 0.18);
+}
+
+.brand-text {
+  background: var(--brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand-bg {
+  background: var(--brand);
+}
+.brand-ring:focus-within {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-a) 25%, transparent);
+  border-color: var(--brand-a);
+}
+
+/* Verdict block: gradient of the verdict colour with a matching glow. */
+.verdict {
+  background: linear-gradient(135deg, var(--v), color-mix(in srgb, var(--v) 65%, var(--brand-b)));
+  box-shadow: 0 20px 60px -20px color-mix(in srgb, var(--v) 70%, transparent);
 }
 
 /* The claim, marked on the verdict block. Strike for false, underline for true,
@@ -87,7 +167,7 @@ textarea:focus-visible {
 }
 
 .shimmer {
-  background: linear-gradient(90deg, var(--field) 0%, #e9eaee 50%, var(--field) 100%);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.22) 50%, rgba(99, 102, 241, 0.1) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }
@@ -100,6 +180,11 @@ textarea:focus-visible {
   animation: dots 1.4s steps(4, end) infinite;
 }
 
+@keyframes drift {
+  to {
+    transform: translate(6vw, 4vh) scale(1.08);
+  }
+}
 @keyframes draw {
   to {
     background-size: 100% var(--thickness);
@@ -154,7 +239,10 @@ textarea:focus-visible {
   .shimmer {
     animation: none;
   }
-  .tinted {
+  .aurora::before,
+  .aurora::after,
+  .aurora > i {
+    animation: none;
     transition: none;
   }
   .ellipsis::after {

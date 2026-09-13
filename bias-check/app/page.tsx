@@ -67,13 +67,16 @@ export default function Page() {
 
   return (
     <main
-      className="tinted flex-1 px-5 pb-24 pt-8 sm:px-8"
+      className={`flex-1 px-5 pb-24 pt-6 sm:px-8 ${v ? "verdict-page" : ""}`}
       style={v ? ({ "--v": v.color } as React.CSSProperties) : undefined}
     >
+      <div className="aurora" aria-hidden>
+        <i />
+      </div>
       <div className="mx-auto w-full max-w-3xl">
-        <header className="flex items-center justify-between">
+        <header className="glass flex items-center justify-between rounded-full py-2 pl-3 pr-5">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <span className="grid size-6 place-items-center rounded-md bg-fg text-bg" aria-hidden>
+            <span className="brand-bg grid size-7 place-items-center rounded-full text-white" aria-hidden>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 7.5l3 3 7-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -88,7 +91,7 @@ export default function Page() {
             <label htmlFor="claim" className="block font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.03em] sm:text-7xl">
               What do you
               <br />
-              believe?
+              <span className="brand-text">believe?</span>
             </label>
             <p className="mt-5 max-w-md text-lg text-muted">
               Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
@@ -107,13 +110,13 @@ export default function Page() {
                   submit();
                 }
               }}
-              className="mt-8 block w-full resize-none rounded-2xl border-2 border-fg bg-bg p-5 font-display text-2xl font-medium leading-snug tracking-tight placeholder:text-faint sm:text-3xl [field-sizing:content]"
+              className="glass brand-ring mt-8 block w-full resize-none rounded-2xl p-5 font-display text-2xl font-medium leading-snug tracking-tight transition placeholder:text-faint focus:outline-none sm:text-3xl [field-sizing:content]"
             />
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <button
                 type="submit"
                 disabled={!ready}
-                className="rounded-full bg-fg px-6 py-3 font-display text-base font-bold text-bg transition hover:scale-[1.02] disabled:opacity-25 disabled:hover:scale-100"
+                className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(99,102,241,0.7)] transition hover:scale-[1.03] hover:shadow-[0_14px_36px_-10px_rgba(99,102,241,0.8)] disabled:opacity-30 disabled:shadow-none disabled:hover:scale-100"
               >
                 Check it &rarr;
               </button>
@@ -126,8 +129,7 @@ export default function Page() {
           <section className="mt-10 sm:mt-14" aria-live="polite">
             {/* The verdict block: colour when the answer lands, grey while reading. */}
             <div
-              className={`rise overflow-hidden rounded-3xl p-6 sm:p-9 ${v ? "text-white" : "bg-field"}`}
-              style={v ? { background: v.color } : undefined}
+              className={`rise overflow-hidden rounded-3xl p-6 sm:p-9 ${v ? "verdict text-white" : "glass"}`}
             >
               <p className={`font-mono text-xs uppercase tracking-[0.16em] ${v ? "text-white/70" : "text-muted"}`}>
                 {loading ? <span className="ellipsis">Reading trusted sources</span> : error ? "Couldn't check" : "Verdict"}
@@ -148,7 +150,7 @@ export default function Page() {
                 </p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {TRUSTED_SOURCES.flatMap((g) => g.domains).map((d) => (
-                    <span key={d} className="rounded-full border border-line bg-bg px-2.5 py-1 font-mono text-[0.7rem] text-muted">
+                    <span key={d} className="glass rounded-full px-2.5 py-1 font-mono text-[0.7rem] text-muted">
                       {d}
                     </span>
                   ))}
@@ -159,7 +161,7 @@ export default function Page() {
             {error && (
               <div role="alert" className="mt-8">
                 <p className="text-lg">{error}</p>
-                <button onClick={reset} className="mt-3 rounded-full border-2 border-fg px-5 py-2 font-display text-sm font-bold">
+                <button onClick={reset} className="brand-bg mt-3 rounded-full px-5 py-2 font-display text-sm font-bold text-white">
                   Try another belief
                 </button>
               </div>
@@ -196,7 +198,7 @@ export default function Page() {
                         <li
                           key={s.url}
                           id={`src-${i + 1}`}
-                          className="scroll-mt-6 rounded-2xl border border-line bg-bg p-4 transition target:border-fg target:shadow-[0_0_0_3px_var(--line)]"
+                          className="glass scroll-mt-6 rounded-2xl p-4 transition hover:-translate-y-0.5 target:shadow-[0_0_0_3px_var(--v)]"
                         >
                           <div className="flex items-center gap-2 font-mono text-xs text-muted">
                             <span
@@ -232,7 +234,7 @@ export default function Page() {
 
                 <button
                   onClick={reset}
-                  className="mt-12 rounded-full border-2 border-fg px-6 py-3 font-display text-base font-bold transition hover:bg-fg hover:text-bg"
+                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(99,102,241,0.7)] transition hover:scale-[1.03]"
                 >
                   Check another belief
                 </button>
