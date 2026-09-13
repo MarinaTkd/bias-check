@@ -30,6 +30,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resultId, setResultId] = useState<string | null>(null);
+  const [shareNote, setShareNote] = useState<string | null>(null);
   const domainsDialog = useRef<HTMLDialogElement>(null);
   const communityDialog = useRef<HTMLDialogElement>(null);
   const [joinState, setJoinState] = useState<"idle" | "sending" | "joined" | { error: string }>("idle");
@@ -43,6 +45,7 @@ export default function Page() {
     setChecked(text);
     setLoading(true);
     setResult(null);
+    setResultId(null);
     setError(null);
     try {
       const res = await fetch("/api/check", {
@@ -52,7 +55,10 @@ export default function Page() {
       });
       const data = await res.json();
       if (!res.ok) setError(data.error ?? "Something went wrong.");
-      else setResult(data);
+      else {
+        setResult(data);
+        setResultId(typeof data.id === "string" ? data.id : null);
+      }
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
@@ -77,10 +83,31 @@ export default function Page() {
     }
   }
 
+  // The device's own share sheet where it exists, clipboard everywhere else.
+  async function share() {
+    if (!resultId) return;
+    const url = `${window.location.origin}/r/${resultId}`;
+    const text = result ? `"${checked}" — ${VERDICT[result.verdict].label}` : (checked ?? "");
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Check Your Bias", text, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShareNote("Link copied");
+    } catch {
+      // A cancelled share sheet throws AbortError; say nothing in that case.
+      if (!navigator.share) setShareNote("Couldn't copy the link");
+    }
+    setTimeout(() => setShareNote(null), 2000);
+  }
+
   function reset() {
     setClaim("");
     setChecked(null);
     setResult(null);
+    setResultId(null);
+    setShareNote(null);
     setError(null);
   }
 
@@ -444,12 +471,25 @@ export default function Page() {
                   </section>
                 )}
 
-                <button
-                  onClick={reset}
-                  className="brand-bg mt-12 rounded-full px-6 py-3 font-display text-base font-bold text-bg shadow-[0_10px_30px_-10px_rgba(245,143,124,0.45)] transition hover:scale-[1.03]"
-                >
-                  Check another belief
-                </button>
+                <div className="mt-12 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={reset}
+                    className="brand-bg rounded-full px-6 py-3 font-display text-base font-bold text-bg shadow-[0_10px_30px_-10px_rgba(245,143,124,0.45)] transition hover:scale-[1.03]"
+                  >
+                    Check another belief
+                  </button>
+                  {resultId && (
+                    <button
+                      onClick={share}
+                      className="glass rounded-full px-6 py-3 font-display text-base font-bold text-fg transition hover:scale-[1.03]"
+                    >
+                      Share
+                    </button>
+                  )}
+                  <span className="font-mono text-xs text-muted" aria-live="polite">
+                    {shareNote}
+                  </span>
+                </div>
               </>
             )}
           </section>
