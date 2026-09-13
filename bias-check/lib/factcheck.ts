@@ -25,7 +25,7 @@ export const TRUSTED_DOMAINS: string[] = [
 ];
 
 export function parseVerdict(text: string): { verdict: Verdict; summary: string } {
-  const m = text.match(/^\s*verdict:\s*([a-z ]+?)\s*\n/i);
+  const m = text.match(/^\s*verdict:\s*([a-z][a-z ]*?)[.!:]*\s*(?:\r?\n|$)/i);
   if (!m) return { verdict: "UNVERIFIABLE", summary: text.trim() };
   const word = m[1].trim().toUpperCase().replace(/\s+/g, " ");
   const verdict = (VERDICTS as string[]).includes(word) ? (word as Verdict) : "UNVERIFIABLE";

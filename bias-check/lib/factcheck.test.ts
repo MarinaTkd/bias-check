@@ -59,3 +59,21 @@ test("TRUSTED_DOMAINS is a non-empty list of bare hostnames within the API limit
   }
   assert.equal(new Set(TRUSTED_DOMAINS).size, TRUSTED_DOMAINS.length, "no duplicates");
 });
+
+test("parseVerdict handles verdict with no trailing newline", () => {
+  const r = parseVerdict("VERDICT: TRUE");
+  assert.equal(r.verdict, "TRUE");
+  assert.equal(r.summary, "");
+});
+
+test("parseVerdict handles verdict with trailing punctuation", () => {
+  const r = parseVerdict("VERDICT: TRUE.\nBody.");
+  assert.equal(r.verdict, "TRUE");
+  assert.equal(r.summary, "Body.");
+});
+
+test("parseVerdict handles CRLF line endings", () => {
+  const r = parseVerdict("VERDICT: MOSTLY FALSE\r\n\r\nBody.");
+  assert.equal(r.verdict, "MOSTLY FALSE");
+  assert.equal(r.summary, "Body.");
+});
