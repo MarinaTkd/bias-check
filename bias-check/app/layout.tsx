@@ -20,9 +20,16 @@ const mono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+// Link previews need absolute URLs. Vercel sets VERCEL_URL on every deployment.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Check Your Bias",
   description: "State a belief. Read what trustworthy sources say about it.",
+  openGraph: { title: "Check Your Bias", description: "Type a belief. Read the evidence.", type: "website" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

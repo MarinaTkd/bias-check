@@ -10,11 +10,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!saved) return { title: "Result not found", robots };
   const verdict = saved.result.verdict.toLowerCase();
   const firstSentence = saved.result.summary.split(/(?<=[.!?])\s/)[0] ?? "";
-  return {
-    title: `"${saved.claim}" — ${verdict}`,
-    description: `Checked against trusted sources: ${verdict}. ${firstSentence}`.slice(0, 200),
-    robots,
-  };
+  // openGraph must be set explicitly: a parent layout's openGraph is not overridden by a child's
+  // title alone, and openGraph is what messaging apps actually show in a link preview.
+  const title = `"${saved.claim}" — ${verdict}`;
+  const description = `Checked against trusted sources: ${verdict}. ${firstSentence}`.slice(0, 200);
+  return { title, description, openGraph: { title, description, type: "article" }, robots };
 }
 
 export default async function SharedResult({ params }: { params: Promise<{ id: string }> }) {
