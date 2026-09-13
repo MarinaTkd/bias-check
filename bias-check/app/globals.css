@@ -1,73 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #fbfaf7;
-  --ink: #141b3a;
-  --ink-soft: #4a5170;
-  --ink-faint: #9aa1bc;
-  --rule: #d9dbe6;
-  --pen: #c6301e;
-  --highlight: #f6efd6;
+  --bg: #ffffff;
+  --fg: #0b0b0f;
+  --muted: #5f6470;
+  --faint: #9a9fab;
+  --line: #e6e7eb;
+  --field: #f3f4f6;
 
-  --v-false: #c6301e;
-  --v-mostly-false: #d9642a;
-  --v-mixed: #b8860b;
-  --v-mostly-true: #5c8f3f;
-  --v-true: #2e7d52;
+  --v-false: #e5322d;
+  --v-mostly-false: #f26a21;
+  --v-mixed: #e8a913;
+  --v-mostly-true: #5fae2f;
+  --v-true: #17a65b;
   --v-unverifiable: #6b7280;
+
+  /* Set on <main> when a verdict lands; the page tints toward it. */
+  --v: transparent;
+  --tint: color-mix(in srgb, var(--v) 7%, var(--bg));
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-faint: var(--ink-faint);
-  --color-rule: var(--rule);
-  --color-pen: var(--pen);
-  --color-highlight: var(--highlight);
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-field: var(--field);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-body), Georgia, serif;
-  font-feature-settings: "kern", "liga", "onum";
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 :focus-visible {
-  outline: 2px solid var(--pen);
+  outline: 3px solid var(--fg);
   outline-offset: 3px;
 }
 textarea:focus-visible {
   outline: none;
 }
 
-/* The claim, marked by the evidence. One pen colour per verdict, one gesture per family:
-   a strike for false, an underline for true, a wave for mixed, dots for unverifiable. */
+/* The page reacts to the verdict. */
+.tinted {
+  background: linear-gradient(var(--tint), var(--bg) 70vh);
+  transition: background 600ms ease;
+}
+
+/* The claim, marked on the verdict block. Strike for false, underline for true,
+   wave for mixed, dots for unverifiable. */
 .mark {
-  --line: var(--v);
-  --thickness: 0.085em;
-  background-image: linear-gradient(var(--line), var(--line));
+  --thickness: 0.09em;
+  background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
   background-size: 0% var(--thickness);
-  background-position: 0 var(--pos, 56%);
+  background-position: 0 var(--pos, 55%);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  animation: draw 700ms 250ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation: draw 600ms 350ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
 .mark--under {
-  --pos: 94%;
+  --pos: 96%;
 }
 .mark--wavy,
 .mark--dotted {
   background: none;
-  animation: fade 500ms 250ms both;
+  animation: fade 500ms 350ms both;
   text-decoration-line: underline;
-  text-decoration-color: var(--line);
-  text-decoration-thickness: 0.06em;
+  text-decoration-thickness: 0.07em;
   text-underline-offset: 0.14em;
 }
 .mark--wavy {
@@ -77,13 +82,14 @@ textarea:focus-visible {
   text-decoration-style: dotted;
 }
 
-.stamp {
-  animation: fade 400ms 900ms both;
+.rise {
+  animation: rise 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* The rule under the claim breathes while sources are being read. */
-.rule-pulse {
-  animation: breathe 1.8s ease-in-out infinite;
+.shimmer {
+  background: linear-gradient(90deg, var(--field) 0%, #e9eaee 50%, var(--field) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
 }
 
 .ellipsis::after {
@@ -107,13 +113,19 @@ textarea:focus-visible {
     opacity: 1;
   }
 }
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.25;
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-  50% {
-    opacity: 0.9;
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
   }
 }
 @keyframes dots {
@@ -138,15 +150,14 @@ textarea:focus-visible {
   }
   .mark--wavy,
   .mark--dotted,
-  .stamp {
+  .rise,
+  .shimmer {
     animation: none;
   }
-  /* The rule under the claim breathes while sources are being read. */
-.rule-pulse {
-  animation: breathe 1.8s ease-in-out infinite;
-}
-
-.ellipsis::after {
+  .tinted {
+    transition: none;
+  }
+  .ellipsis::after {
     animation: none;
     content: "…";
   }

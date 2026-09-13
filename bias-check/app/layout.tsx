@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Instrument_Serif, Source_Serif_4 } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const display = Instrument_Serif({
+const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+  weight: ["500", "700", "800"],
 });
 
-const body = Source_Serif_4({
+const body = Instrument_Sans({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
 });
 
 const mono = IBM_Plex_Mono({

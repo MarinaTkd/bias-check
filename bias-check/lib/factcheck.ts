@@ -40,6 +40,7 @@ export function withParagraphBreaks<T extends ContentLike>(blocks: T[]): T[] {
     if (prev === null && !first) text = "\n" + text;
     else if (prev !== null) {
       if (/^\s+[,;:.!?]/.test(text)) text = text.replace(/^\s+/, "");
+      else if (/\n$/.test(prev)) text = text.replace(/^[ \t]+/, "");
       else if (/[.!?]$/.test(prev) && /^[A-Za-z0-9"(]/.test(text)) text = " " + text;
     }
     prev = text;

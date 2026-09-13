@@ -1,20 +1,19 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import type { CheckResult, Verdict } from "@/lib/factcheck";
 import { TRUSTED_DOMAINS, TRUSTED_SOURCES } from "@/lib/domains";
 
-// How the pen marks the claim for each verdict: the colour token and the gesture.
-const MARK: Record<Verdict, { color: string; gesture: string }> = {
-  FALSE: { color: "var(--v-false)", gesture: "" },
-  "MOSTLY FALSE": { color: "var(--v-mostly-false)", gesture: "" },
-  MIXED: { color: "var(--v-mixed)", gesture: "mark--wavy" },
-  "MOSTLY TRUE": { color: "var(--v-mostly-true)", gesture: "mark--under" },
-  TRUE: { color: "var(--v-true)", gesture: "mark--under" },
-  UNVERIFIABLE: { color: "var(--v-unverifiable)", gesture: "mark--dotted" },
+// One colour and one pen gesture per verdict.
+const VERDICT: Record<Verdict, { color: string; gesture: string; label: string }> = {
+  FALSE: { color: "var(--v-false)", gesture: "", label: "False" },
+  "MOSTLY FALSE": { color: "var(--v-mostly-false)", gesture: "", label: "Mostly false" },
+  MIXED: { color: "var(--v-mixed)", gesture: "mark--wavy", label: "Mixed" },
+  "MOSTLY TRUE": { color: "var(--v-mostly-true)", gesture: "mark--under", label: "Mostly true" },
+  TRUE: { color: "var(--v-true)", gesture: "mark--under", label: "True" },
+  UNVERIFIABLE: { color: "var(--v-unverifiable)", gesture: "mark--dotted", label: "Unverifiable" },
 };
-
-const PLACEHOLDER = "coffee stunts your growth.";
 
 function hostOf(url: string) {
   try {
@@ -26,7 +25,7 @@ function hostOf(url: string) {
 
 export default function Page() {
   const [claim, setClaim] = useState("");
-  const [checked, setChecked] = useState<string | null>(null); // the claim as submitted
+  const [checked, setChecked] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,30 +63,43 @@ export default function Page() {
     setError(null);
   }
 
-  const mark = result ? MARK[result.verdict] : null;
+  const v = result ? VERDICT[result.verdict] : null;
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 pb-24 pt-14 sm:px-10 sm:pt-20">
-      <header className="flex items-baseline justify-between font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-        <span className="text-pen">Bias check</span>
-        <span className="hidden sm:inline">Your belief, read against the evidence</span>
-      </header>
+    <main
+      className="tinted flex-1 px-5 pb-24 pt-8 sm:px-8"
+      style={v ? ({ "--v": v.color } as React.CSSProperties) : undefined}
+    >
+      <div className="mx-auto w-full max-w-3xl">
+        <header className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
+            <span className="grid size-6 place-items-center rounded-md bg-fg text-bg" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 7.5l3 3 7-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            Bias Check
+          </Link>
+          <span className="hidden font-mono text-xs text-muted sm:inline">{TRUSTED_DOMAINS.length} trusted domains. Nothing else.</span>
+        </header>
 
-      {/* The claim: a sentence you complete, and later the sentence the evidence marks up. */}
-      <section className="mt-16 font-display text-[2rem] leading-[1.15] sm:text-[2.75rem]">
-        <span className="italic text-ink-soft">I believe that </span>
         {checked === null ? (
-          <form onSubmit={submit} className="inline">
-            <label htmlFor="claim" className="sr-only">
-              Your belief
+          <form onSubmit={submit} className="mt-20 sm:mt-28">
+            <label htmlFor="claim" className="block font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.03em] sm:text-7xl">
+              What do you
+              <br />
+              believe?
             </label>
+            <p className="mt-5 max-w-md text-lg text-muted">
+              Write it the way you&rsquo;d say it. We read what trusted sources say, especially where they disagree with you.
+            </p>
             <textarea
               id="claim"
               autoFocus
-              rows={1}
+              rows={2}
               maxLength={500}
               value={claim}
-              placeholder={PLACEHOLDER}
+              placeholder="Coffee stunts your growth."
               onChange={(e) => setClaim(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -95,137 +107,146 @@ export default function Page() {
                   submit();
                 }
               }}
-              className="block w-full resize-none border-0 border-b-2 border-rule bg-transparent p-0 pb-1 font-display text-ink placeholder:text-ink-faint caret-pen focus:border-pen focus:outline-none [field-sizing:content]"
+              className="mt-8 block w-full resize-none rounded-2xl border-2 border-fg bg-bg p-5 font-display text-2xl font-medium leading-snug tracking-tight placeholder:text-faint sm:text-3xl [field-sizing:content]"
             />
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-ink-soft">
-              <span aria-live="polite">
-                {claim.length > 0 ? `${claim.length} / 500` : "Enter to check · Shift+Enter for a new line"}
-              </span>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
               <button
                 type="submit"
                 disabled={!ready}
-                className="rounded-sm bg-pen px-4 py-2 uppercase tracking-[0.14em] text-paper transition-opacity hover:opacity-90 disabled:opacity-30"
+                className="rounded-full bg-fg px-6 py-3 font-display text-base font-bold text-bg transition hover:scale-[1.02] disabled:opacity-25 disabled:hover:scale-100"
               >
-                Check this belief
+                Check it &rarr;
               </button>
+              <span className="font-mono text-xs text-muted" aria-live="polite">
+                {claim.length > 0 ? `${claim.length} / 500` : "Enter to check"}
+              </span>
             </div>
           </form>
         ) : (
-          <>
-            <span
-              className={mark ? `mark ${mark.gesture}` : ""}
-              style={mark ? ({ "--v": mark.color } as React.CSSProperties) : undefined}
+          <section className="mt-10 sm:mt-14" aria-live="polite">
+            {/* The verdict block: colour when the answer lands, grey while reading. */}
+            <div
+              className={`rise overflow-hidden rounded-3xl p-6 sm:p-9 ${v ? "text-white" : "bg-field"}`}
+              style={v ? { background: v.color } : undefined}
             >
-              {checked}
-            </span>
-            {result && mark && (
-              <span
-                className="stamp ml-3 inline-block -translate-y-1 rounded-sm border-[1.5px] px-2 py-0.5 align-middle font-mono text-xs font-medium uppercase tracking-[0.14em]"
-                style={{ borderColor: mark.color, color: mark.color }}
-              >
-                {result.verdict}
-              </span>
-            )}
-          </>
-        )}
-      </section>
-
-      {loading && (
-        <aside className="mt-8 max-w-[38rem]" aria-busy="true">
-          <div className="rule-pulse h-0.5 w-full bg-pen" />
-          <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft">
-            <span className="ellipsis">Reading trusted sources</span>
-            <span className="ml-3 normal-case tracking-normal text-ink-faint">typically 10 to 20 seconds</span>
-          </p>
-          {/* Fill the wait with the trust model: exactly what is being searched, and nothing else. */}
-          <dl className="mt-5 grid gap-y-3 text-sm leading-relaxed sm:grid-cols-[12rem_1fr] sm:gap-x-6">
-            {TRUSTED_SOURCES.map((g) => (
-              <Fragment key={g.category}>
-                <dt className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-ink-soft sm:pt-0.5">{g.category}</dt>
-                <dd className="text-ink-soft">{g.domains.join(" · ")}</dd>
-              </Fragment>
-            ))}
-          </dl>
-          <p className="mt-5 font-mono text-xs text-ink-faint">{TRUSTED_DOMAINS.length} domains. Nothing outside this list is searched.</p>
-        </aside>
-      )}
-
-      {error && (
-        <div role="alert" className="mt-10 border-l-2 border-pen pl-4">
-          <p className="text-lg">{error}</p>
-          <button onClick={reset} className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft underline-offset-4 hover:underline">
-            Try another belief
-          </button>
-        </div>
-      )}
-
-      <section aria-live="polite">
-        {result && (
-          <>
-            <h2 className="mt-14 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">What the evidence says</h2>
-            <div className="mt-4 max-w-[38rem] whitespace-pre-wrap text-[1.15rem] leading-[1.65]">
-              {result.segments.map((seg, i) => (
-                <span key={i}>
-                  {seg.text}
-                  {seg.refs.map((n) => (
-                    <sup key={n} className="ml-px font-mono text-[0.68em] leading-none">
-                      <a
-                        href={`#src-${n}`}
-                        title={result.sources[n - 1]?.title}
-                        className="rounded-xs px-px text-pen no-underline hover:bg-highlight"
-                      >
-                        [{n}]
-                      </a>
-                    </sup>
-                  ))}
-                </span>
-              ))}
+              <p className={`font-mono text-xs uppercase tracking-[0.16em] ${v ? "text-white/70" : "text-muted"}`}>
+                {loading ? <span className="ellipsis">Reading trusted sources</span> : error ? "Couldn't check" : "Verdict"}
+              </p>
+              {v && (
+                <p className="mt-2 font-display text-6xl font-extrabold leading-none tracking-[-0.04em] sm:text-8xl">{v.label}</p>
+              )}
+              {loading && <div className="shimmer mt-3 h-14 w-2/3 rounded-xl sm:h-20" aria-hidden />}
+              <p className={`mt-6 font-display text-xl font-medium leading-snug tracking-tight sm:text-2xl ${v ? "" : "text-fg"}`}>
+                <span className={`${v ? `mark ${v.gesture}` : ""}`}>{checked}</span>
+              </p>
             </div>
 
-            {result.sources.length > 0 && (
-              <>
-                <h2 className="mt-14 flex items-baseline gap-3 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-                  Sources
-                  <span className="text-ink-faint">{result.sources.length}</span>
-                </h2>
-                <ol className="mt-4 divide-y divide-rule">
-                  {result.sources.map((s, i) => (
-                    <li
-                      key={s.url}
-                      id={`src-${i + 1}`}
-                      className="grid scroll-mt-6 grid-cols-[2.5rem_1fr] gap-x-2 py-4 transition-colors target:bg-highlight"
-                    >
-                      <span className="font-mono text-sm text-pen">[{i + 1}]</span>
-                      <div className="min-w-0">
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium underline decoration-rule decoration-1 underline-offset-4 hover:decoration-ink"
-                        >
-                          {s.title}
-                        </a>
-                        <span className="ml-2 font-mono text-xs text-ink-faint">{hostOf(s.url)}</span>
-                        {s.quote && <p className="mt-1.5 text-[0.95rem] italic leading-relaxed text-ink-soft">&ldquo;{s.quote}&rdquo;</p>}
-                      </div>
-                    </li>
+            {loading && (
+              <aside className="mt-8" aria-busy="true">
+                <p className="text-sm text-muted">
+                  Typically 10 to 20 seconds. Only these sources are searched:
+                </p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {TRUSTED_SOURCES.flatMap((g) => g.domains).map((d) => (
+                    <span key={d} className="rounded-full border border-line bg-bg px-2.5 py-1 font-mono text-[0.7rem] text-muted">
+                      {d}
+                    </span>
                   ))}
-                </ol>
-              </>
+                </div>
+              </aside>
             )}
 
-            <button onClick={reset} className="mt-14 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft underline-offset-4 hover:underline">
-              Check another belief
-            </button>
-          </>
-        )}
-      </section>
+            {error && (
+              <div role="alert" className="mt-8">
+                <p className="text-lg">{error}</p>
+                <button onClick={reset} className="mt-3 rounded-full border-2 border-fg px-5 py-2 font-display text-sm font-bold">
+                  Try another belief
+                </button>
+              </div>
+            )}
 
-      <footer className="mt-24 max-w-[38rem] border-t border-rule pt-5 text-sm leading-relaxed text-ink-soft">
-        Only peer-reviewed journals, public health and science agencies, statistics offices, reference works and
-        established fact-checkers are searched. The summary leans toward the evidence against your belief on purpose;
-        when the evidence supports it, it says so.
-      </footer>
+            {result && (
+              <>
+                <div className="rise mt-10 max-w-[40rem] whitespace-pre-wrap text-[1.125rem] leading-[1.6]" style={{ animationDelay: "200ms" }}>
+                  {result.segments.map((seg, i) => (
+                    <span key={i}>
+                      {seg.text}
+                      {seg.refs.map((n) => (
+                        <a
+                          key={n}
+                          href={`#src-${n}`}
+                          title={result.sources[n - 1]?.title}
+                          className="mx-0.5 inline-block -translate-y-1.5 rounded-md px-1.5 font-mono text-[0.66rem] font-medium leading-[1.5] text-white"
+                          style={{ background: v?.color }}
+                        >
+                          {n}
+                        </a>
+                      ))}
+                    </span>
+                  ))}
+                </div>
+
+                {result.sources.length > 0 && (
+                  <section className="rise mt-12" style={{ animationDelay: "350ms" }}>
+                    <h2 className="font-display text-2xl font-bold tracking-tight">
+                      Sources <span className="text-faint">{result.sources.length}</span>
+                    </h2>
+                    <ol className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {result.sources.map((s, i) => (
+                        <li
+                          key={s.url}
+                          id={`src-${i + 1}`}
+                          className="scroll-mt-6 rounded-2xl border border-line bg-bg p-4 transition target:border-fg target:shadow-[0_0_0_3px_var(--line)]"
+                        >
+                          <div className="flex items-center gap-2 font-mono text-xs text-muted">
+                            <span
+                              className="grid size-5 shrink-0 place-items-center rounded-md text-[0.66rem] font-medium text-white"
+                              style={{ background: v?.color }}
+                            >
+                              {i + 1}
+                            </span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${hostOf(s.url)}&sz=32`}
+                              alt=""
+                              width={16}
+                              height={16}
+                              className="rounded-sm"
+                            />
+                            <span className="truncate">{hostOf(s.url)}</span>
+                          </div>
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 block font-display text-[1.05rem] font-semibold leading-snug tracking-tight hover:underline"
+                          >
+                            {s.title}
+                          </a>
+                          {s.quote && <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">&ldquo;{s.quote}&rdquo;</p>}
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
+
+                <button
+                  onClick={reset}
+                  className="mt-12 rounded-full border-2 border-fg px-6 py-3 font-display text-base font-bold transition hover:bg-fg hover:text-bg"
+                >
+                  Check another belief
+                </button>
+              </>
+            )}
+          </section>
+        )}
+
+        <footer className="mt-24 max-w-[40rem] border-t border-line pt-5 text-sm leading-relaxed text-muted">
+          Only peer-reviewed journals, public health and science agencies, statistics offices, reference works and
+          established fact-checkers are searched. The summary leans toward the evidence against your belief on purpose;
+          when the evidence supports it, it says so.
+        </footer>
+      </div>
     </main>
   );
 }
