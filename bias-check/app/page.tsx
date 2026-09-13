@@ -81,7 +81,7 @@ export default function Page() {
                 <path d="M2 7.5l3 3 7-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            Bias Check
+            Check Your Bias
           </Link>
           <span className="hidden font-mono text-xs text-faint sm:inline">{TRUSTED_DOMAINS.length} trusted domains. Nothing else.</span>
         </header>

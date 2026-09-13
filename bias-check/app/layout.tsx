@@ -21,7 +21,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bias Check",
+  title: "Check Your Bias",
   description: "State a belief. Read what trustworthy sources say about it.",
 };
 
