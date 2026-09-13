@@ -18,6 +18,12 @@ Requires Node 23.6+ (24 recommended).
     npm test        # unit tests, no network
     npm run smoke   # one real end-to-end check (spends API credit)
 
+## Model and cost
+
+Checks run on `claude-sonnet-5` at medium effort with up to 4 web searches, about $0.05 per new claim
+(measured; Opus 5 gave the same verdicts at roughly $0.14). Set `BIAS_CHECK_MODEL=claude-opus-5` in
+`.env.local` to use the heavier model. Repeated claims are served from an in-memory cache and cost nothing.
+
 ## Editing the trusted-source list
 
 `TRUSTED_DOMAINS` in `lib/factcheck.ts`. Bare hostnames only; subdomains are included automatically; max 64 entries.

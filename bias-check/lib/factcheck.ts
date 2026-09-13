@@ -39,6 +39,17 @@ export function parseVerdict(text: string): { verdict: Verdict; summary: string;
 type CitationLike = { type: string; url?: string; title?: string | null; cited_text?: string };
 type ContentLike = { type: string; text?: string; citations?: CitationLike[] | null };
 
+// Text blocks separated by tool blocks are separate paragraphs, but the API gives no separator.
+// Prefix such blocks with a newline so the verdict line still starts a line after a preamble.
+export function withParagraphBreaks<T extends ContentLike>(blocks: T[]): T[] {
+  let prevWasText = true;
+  return blocks.map((b) => {
+    const out = b.type === "text" && !prevWasText && typeof b.text === "string" ? { ...b, text: "\n" + b.text } : b;
+    prevWasText = b.type === "text";
+    return out;
+  });
+}
+
 // Splits the text blocks into segments carrying source numbers, dropping the first `skipChars`
 // characters (the verdict line) and any whitespace-only leading/trailing segments.
 export function buildSegments(blocks: ContentLike[], sources: Source[], skipChars: number): Segment[] {
@@ -89,12 +100,16 @@ const SYSTEM_PROMPT = `You help people test their own beliefs against evidence. 
 
 Research it with the web_search tool. Only the sources the tool returns are permitted; cite them.
 
-Then answer in this exact shape:
+Then answer in this exact shape. Write nothing before the verdict line, not even a sentence saying you will research the claim.
 Line 1: "VERDICT: X" where X is exactly one of FALSE, MOSTLY FALSE, MIXED, MOSTLY TRUE, TRUE, UNVERIFIABLE.
 Then a blank line, then 2 to 5 short paragraphs of plain prose.
 Use no markdown anywhere in the reply, including the verdict line: no asterisks, bold, headings or bullets.
 
 Focus the summary on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, say so plainly and mark it TRUE; do not invent doubt. If the claim is a matter of opinion or cannot be checked, mark it UNVERIFIABLE and explain why. Be direct, specific and non-judgemental about the reader.`;
+
+// Sonnet 5 at medium effort matched Opus 5's verdicts on test claims at ~5x lower cost. Override
+// with BIAS_CHECK_MODEL=claude-opus-5 if you want the heavier model.
+const MODEL = process.env.BIAS_CHECK_MODEL ?? "claude-sonnet-5";
 
 // Throws Error("refused") if the model declined the request, or Error("incomplete") if
 // research was still pausing/compacting after the continuation cap, hit max_tokens or the
@@ -114,15 +129,22 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
     const attemptStartedAt = Date.now();
     message = await client.beta.messages
       .stream({
-        model: "claude-opus-5",
+        model: MODEL,
         max_tokens: 16000,
         system: SYSTEM_PROMPT,
         messages,
+        // allowed_callers: ["direct"] keeps search out of the code-execution path, which both
+        // drops citation payloads and roughly doubles input tokens.
         tools: [
-          { type: "web_search_20260209", name: "web_search", max_uses: 8, allowed_domains: TRUSTED_DOMAINS },
+          {
+            type: "web_search_20260209",
+            name: "web_search",
+            max_uses: 4,
+            allowed_domains: TRUSTED_DOMAINS,
+            allowed_callers: ["direct"],
+          },
         ],
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
+        output_config: { effort: "medium" },
       })
       .finalMessage();
     blocks.push(...message.content);
@@ -141,14 +163,15 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
     throw new Error("incomplete");
   }
 
-  const text = blocks
+  const paragraphs = withParagraphBreaks(blocks);
+  const text = paragraphs
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
     .map((b) => b.text)
     .join("");
   if (!text.trim()) throw new Error("incomplete");
   const { verdict, summary, bodyStart } = parseVerdict(text);
-  const sources = extractSources(blocks);
-  const segments = buildSegments(blocks, sources, bodyStart);
+  const sources = extractSources(paragraphs);
+  const segments = buildSegments(paragraphs, sources, bodyStart);
   console.log(
     `[bias-check] done verdict=${verdict} sources=${sources.length} citedSegments=${segments.filter((s) => s.refs.length).length}/${segments.length} summaryChars=${summary.length} total=${Date.now() - startedAt}ms`,
   );

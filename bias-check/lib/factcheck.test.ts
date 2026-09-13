@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseVerdict, extractSources, buildSegments, TRUSTED_DOMAINS } from "./factcheck.ts";
+import { parseVerdict, extractSources, buildSegments, withParagraphBreaks, TRUSTED_DOMAINS } from "./factcheck.ts";
 
 test("parseVerdict reads the verdict line and returns the rest as summary", () => {
   const r = parseVerdict("VERDICT: MOSTLY FALSE\n\nVaccines do not cause autism.\n\nSecond paragraph.");
@@ -133,5 +133,23 @@ test("buildSegments attaches 1-based source numbers to each cited span and skips
     { text: "Cited sentence one.", refs: [1] },
     { text: " Plain middle. ", refs: [] },
     { text: "Cited sentence two.", refs: [2, 1] },
+  ]);
+});
+
+test("withParagraphBreaks lets a verdict after a preamble and a tool call start its own line", () => {
+  const blocks = withParagraphBreaks([
+    { type: "text", text: "I'll research this claim." },
+    { type: "server_tool_use" },
+    { type: "web_search_tool_result" },
+    { type: "text", text: "VERDICT: FALSE\n\nBody." },
+    { type: "text", text: " More." },
+  ]);
+  const text = blocks.filter((b) => b.type === "text").map((b) => b.text).join("");
+  const { verdict, summary, bodyStart } = parseVerdict(text);
+  assert.equal(verdict, "FALSE");
+  assert.equal(summary, "Body. More.");
+  assert.deepEqual(buildSegments(blocks, [], bodyStart), [
+    { text: "Body.", refs: [] },
+    { text: " More.", refs: [] },
   ]);
 });

@@ -1,26 +1,134 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fbfaf7;
+  --ink: #141b3a;
+  --ink-soft: #4a5170;
+  --ink-faint: #9aa1bc;
+  --rule: #d9dbe6;
+  --pen: #c6301e;
+  --highlight: #f6efd6;
+
+  --v-false: #c6301e;
+  --v-mostly-false: #d9642a;
+  --v-mixed: #b8860b;
+  --v-mostly-true: #5c8f3f;
+  --v-true: #2e7d52;
+  --v-unverifiable: #6b7280;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-pen: var(--pen);
+  --color-highlight: var(--highlight);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), Georgia, serif;
+  font-feature-settings: "kern", "liga", "onum";
+}
+
+:focus-visible {
+  outline: 2px solid var(--pen);
+  outline-offset: 3px;
+}
+textarea:focus-visible {
+  outline: none;
+}
+
+/* The claim, marked by the evidence. One pen colour per verdict, one gesture per family:
+   a strike for false, an underline for true, a wave for mixed, dots for unverifiable. */
+.mark {
+  --line: var(--v);
+  --thickness: 0.085em;
+  background-image: linear-gradient(var(--line), var(--line));
+  background-repeat: no-repeat;
+  background-size: 0% var(--thickness);
+  background-position: 0 var(--pos, 56%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  animation: draw 700ms 250ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.mark--under {
+  --pos: 94%;
+}
+.mark--wavy,
+.mark--dotted {
+  background: none;
+  animation: fade 500ms 250ms both;
+  text-decoration-line: underline;
+  text-decoration-color: var(--line);
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+.mark--wavy {
+  text-decoration-style: wavy;
+}
+.mark--dotted {
+  text-decoration-style: dotted;
+}
+
+.stamp {
+  animation: fade 400ms 900ms both;
+}
+
+.ellipsis::after {
+  content: "…";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: dots 1.4s steps(4, end) infinite;
+}
+
+@keyframes draw {
+  to {
+    background-size: 100% var(--thickness);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    animation: none;
+    background-size: 100% var(--thickness);
+  }
+  .mark--wavy,
+  .mark--dotted,
+  .stamp {
+    animation: none;
+  }
+  .ellipsis::after {
+    animation: none;
+    content: "…";
+  }
 }
