@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { CheckResult, Verdict } from "@/lib/factcheck";
 import { TRUSTED_DOMAINS, TRUSTED_SOURCES } from "@/lib/domains";
+import { AGE_RANGES, ETHNICITIES, GENDERS } from "@/lib/community";
 
 // One colour and one pen gesture per verdict.
 const VERDICT: Record<Verdict, { color: string; gesture: string; label: string }> = {
@@ -30,6 +31,8 @@ export default function Page() {
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const domainsDialog = useRef<HTMLDialogElement>(null);
+  const communityDialog = useRef<HTMLDialogElement>(null);
+  const [joinState, setJoinState] = useState<"idle" | "sending" | "joined" | { error: string }>("idle");
 
   const ready = claim.trim().length >= 3 && !loading;
 
@@ -54,6 +57,23 @@ export default function Page() {
       setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function join(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setJoinState("sending");
+    const data = Object.fromEntries(new FormData(e.currentTarget));
+    try {
+      const res = await fetch("/api/community", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) setJoinState("joined");
+      else setJoinState({ error: (await res.json()).error ?? "Couldn't join. Try again." });
+    } catch {
+      setJoinState({ error: "Couldn't reach the server. Try again." });
     }
   }
 
@@ -141,6 +161,99 @@ export default function Page() {
                 </section>
               ))}
             </div>
+          </div>
+        </dialog>
+
+        <dialog
+          ref={communityDialog}
+          onClick={(e) => e.target === e.currentTarget && communityDialog.current?.close()}
+          className="glass m-auto max-h-[calc(100dvh-2rem)] w-[min(34rem,calc(100vw-2rem))] overflow-y-auto rounded-3xl p-0 text-fg backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+        >
+          <div className="p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="font-display text-2xl font-bold tracking-tight">Ask the community</h2>
+              <button
+                type="button"
+                onClick={() => communityDialog.current?.close()}
+                aria-label="Close"
+                className="grid size-9 shrink-0 place-items-center rounded-full bg-bg-2/60 text-muted transition hover:text-fg"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                  <path d="M2 2l10 10M12 2 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <p className="mt-3 text-[0.95rem] leading-relaxed text-muted">
+              Some beliefs can&rsquo;t be settled by sources. For those, we&rsquo;re building a community. Once it&rsquo;s large
+              enough, you&rsquo;ll be able to post your question, members will be notified and share their point of view, and
+              their answers will come back to you.
+            </p>
+            <p className="mt-2 text-[0.95rem] leading-relaxed text-muted">
+              There aren&rsquo;t enough members yet. Join now and we&rsquo;ll let you know when it opens.
+            </p>
+
+            {joinState === "joined" ? (
+              <p className="mt-6 rounded-2xl bg-bg-2/60 p-4 text-[0.95rem]">
+                You&rsquo;re in. We&rsquo;ll email you when the community opens.
+              </p>
+            ) : (
+              <form onSubmit={join} className="mt-6 grid gap-4">
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-muted">Email</span>
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    className="brand-ring rounded-xl border border-line bg-bg-2/50 px-3 py-2.5 text-fg placeholder:text-faint focus:outline-none"
+                  />
+                </label>
+                <p className="text-xs leading-relaxed text-faint">
+                  We ask the next three so answers can be shown by group, never by person. Pick &ldquo;Prefer not to say&rdquo; for any of them.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                  {(
+                    [
+                      ["gender", "Gender", GENDERS],
+                      ["ageRange", "Age range", AGE_RANGES],
+                      ["ethnicity", "Ethnicity", ETHNICITIES],
+                    ] as const
+                  ).map(([name, label, options]) => (
+                    <label key={name} className="grid min-w-0 gap-1.5 text-sm">
+                      <span className="text-muted">{label}</span>
+                      <select
+                        name={name}
+                        required
+                        defaultValue=""
+                        className="brand-ring w-full min-w-0 rounded-xl border border-line bg-bg-2/50 px-3 py-2.5 text-fg focus:outline-none"
+                      >
+                        <option value="" disabled>
+                          Choose
+                        </option>
+                        {options.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+                {typeof joinState === "object" && (
+                  <p role="alert" className="text-sm text-[var(--v-false)]">
+                    {joinState.error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={joinState === "sending"}
+                  className="brand-bg mt-1 justify-self-start rounded-full px-6 py-3 font-display text-base font-bold text-bg transition hover:scale-[1.03] disabled:opacity-40"
+                >
+                  {joinState === "sending" ? "Joining…" : "Join the community"}
+                </button>
+              </form>
+            )}
           </div>
         </dialog>
 
@@ -271,6 +384,21 @@ export default function Page() {
                     </span>
                   ))}
                 </div>
+
+                {result.verdict === "UNVERIFIABLE" && (
+                  <div className="glass rise mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5" style={{ animationDelay: "300ms" }}>
+                    <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted">
+                      Trusted sources can&rsquo;t settle this one. People might.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => communityDialog.current?.showModal()}
+                      className="brand-bg rounded-full px-5 py-2.5 font-display text-sm font-bold text-bg transition hover:scale-[1.03]"
+                    >
+                      Ask the community
+                    </button>
+                  </div>
+                )}
 
                 {result.sources.length > 0 && (
                   <section className="rise mt-12" style={{ animationDelay: "350ms" }}>

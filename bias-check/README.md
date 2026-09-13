@@ -24,6 +24,16 @@ Checks run on `claude-opus-5` at medium effort with up to 4 web searches, about 
 (measured). Sonnet 5 reaches the same verdicts at about $0.04 but its summaries are noticeably vaguer;
 set `BIAS_CHECK_MODEL=claude-sonnet-5` in `.env.local` if cost matters more than specificity. Repeated claims are served from an in-memory cache and cost nothing.
 
+## Community sign-ups
+
+When a verdict is UNVERIFIABLE the result offers "Ask the community". The community isn't live yet,
+so the dialog explains how it will work and collects sign-ups: email plus gender, age range and
+ethnicity, each with a "Prefer not to say" option, so future answers can be shown by group rather
+than by person. `POST /api/community` validates every field against the allow-lists in
+`lib/community.ts` and appends to `data/community.jsonl`, which is git-ignored. That file holds
+personal data and only survives on a persistent disk. Move it to a database before deploying
+anywhere with an ephemeral filesystem.
+
 ## Editing the trusted-source list
 
 `TRUSTED_DOMAINS` in `lib/factcheck.ts`. Bare hostnames only; subdomains are included automatically; max 64 entries.

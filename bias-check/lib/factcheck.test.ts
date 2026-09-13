@@ -168,3 +168,13 @@ test("withParagraphBreaks repairs seams between cited blocks", () => {
     "VERDICT: FALSE\n\nA trial of 23 studies found nothing. A 1994 trial randomized 48 children, finding no effect. Observational links exist.\n\nTen of twelve authors retracted.",
   );
 });
+
+test("parseMember accepts a complete sign-up and rejects anything off-list", async () => {
+  const { parseMember } = await import("./community.ts");
+  const ok = parseMember({ email: " Ana@Example.com ", gender: "Woman", ageRange: "25–34", ethnicity: "Prefer not to say" });
+  assert.deepEqual(ok, { email: "ana@example.com", gender: "Woman", ageRange: "25–34", ethnicity: "Prefer not to say" });
+  assert.equal(parseMember({ email: "not-an-email", gender: "Woman", ageRange: "25–34", ethnicity: "White" }), null);
+  assert.equal(parseMember({ email: "a@b.co", gender: "Other", ageRange: "25–34", ethnicity: "White" }), null);
+  assert.equal(parseMember({ email: "a@b.co", gender: "Man", ageRange: "12–17", ethnicity: "White" }), null);
+  assert.equal(parseMember(null), null);
+});
