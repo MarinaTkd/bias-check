@@ -96,7 +96,7 @@ export default function Page() {
                   <span className="brand-text font-extrabold">believe?</span>
                 </label>
                 <p className="mt-5 max-w-md text-lg text-muted/80">
-                  Check your bias.
+                  Type a belief. Read the evidence.
                 </p>
               </div>
               {/* Müller-Lyer illusion: both lines are the same length. Perception, not measurement. */}
