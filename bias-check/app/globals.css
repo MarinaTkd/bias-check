@@ -14,7 +14,11 @@
   --brand-b: #fcd34d;
   --brand-c: #67e8f9;
   --brand: linear-gradient(120deg, var(--brand-a), var(--brand-b) 55%, var(--brand-c));
-  --brand-deep: linear-gradient(120deg, #fb7185, #f59e0b 55%, #22d3ee);
+  /* Foreground accent: deep magenta -> violet -> teal. Text, buttons, focus. */
+  --accent-a: #db2777;
+  --accent-b: #7c3aed;
+  --accent-c: #0891b2;
+  --brand-deep: linear-gradient(120deg, var(--accent-a), var(--accent-b) 55%, var(--accent-c));
 
   /* Background blobs default to the brand; a verdict recolours them. */
   --blob-1: var(--brand-a);
@@ -29,7 +33,7 @@
   --v-unverifiable: #6b7280;
 
   /* Set on <main> when a verdict lands. */
-  --v: #fb7185;
+  --v: var(--accent-b);
 }
 
 @theme inline {
@@ -51,7 +55,7 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid #fb7185;
+  outline: 3px solid var(--accent-b);
   outline-offset: 3px;
 }
 textarea:focus-visible {
@@ -121,11 +125,11 @@ textarea:focus-visible {
   color: transparent;
 }
 .brand-bg {
-  background: var(--brand);
+  background: var(--brand-deep);
 }
 .brand-ring:focus-within {
-  box-shadow: 0 0 0 4px color-mix(in srgb, #fb7185 30%, transparent);
-  border-color: #fb7185;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-b) 25%, transparent);
+  border-color: var(--accent-b);
 }
 
 /* Verdict block: gradient of the verdict colour with a matching glow. */
