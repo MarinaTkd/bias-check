@@ -57,6 +57,7 @@ export default function Page() {
   }
 
   function reset() {
+    setClaim("");
     setChecked(null);
     setResult(null);
     setError(null);
