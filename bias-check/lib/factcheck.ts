@@ -66,11 +66,14 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: claim }];
   const blocks: Anthropic.Beta.BetaContentBlock[] = [];
   let message!: Anthropic.Beta.BetaMessage;
+  const startedAt = Date.now();
+  console.log(`[bias-check] start claim=${JSON.stringify(claim.slice(0, 120))}`);
 
   // pause_turn/compaction: the server-side search loop hit its iteration cap or compacted
   // context; resend with the assistant turn appended and it resumes. Cap continuations so a
   // runaway can't loop forever. Content from every continuation is kept, not just the last.
   for (let attempt = 0; attempt < 4; attempt++) {
+    const attemptStartedAt = Date.now();
     message = await client.beta.messages
       .stream({
         model: "claude-opus-5",
@@ -85,6 +88,7 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
       })
       .finalMessage();
     blocks.push(...message.content);
+    logAttempt(attempt, message, Date.now() - attemptStartedAt);
     if (message.stop_reason !== "pause_turn" && message.stop_reason !== "compaction") break;
     messages.push({ role: "assistant", content: message.content });
   }
@@ -105,5 +109,32 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
     .join("");
   if (!text.trim()) throw new Error("incomplete");
   const { verdict, summary } = parseVerdict(text);
-  return { verdict, summary, sources: extractSources(blocks) };
+  const sources = extractSources(blocks);
+  console.log(
+    `[bias-check] done verdict=${verdict} sources=${sources.length} summaryChars=${summary.length} total=${Date.now() - startedAt}ms`,
+  );
+  return { verdict, summary, sources };
+}
+
+// One line per API round-trip: what the model searched, what came back, how it stopped, what it cost.
+function logAttempt(attempt: number, message: Anthropic.Beta.BetaMessage, ms: number) {
+  const queries: string[] = [];
+  let results = 0;
+  let searchErrors = 0;
+  let textChars = 0;
+  for (const b of message.content) {
+    if (b.type === "server_tool_use" && b.name === "web_search") {
+      queries.push(String((b.input as { query?: unknown })?.query ?? ""));
+    } else if (b.type === "web_search_tool_result") {
+      if (Array.isArray(b.content)) results += b.content.length;
+      else searchErrors++;
+    } else if (b.type === "text") {
+      textChars += b.text.length;
+    }
+  }
+  const u = message.usage;
+  console.log(
+    `[bias-check] attempt=${attempt} stop=${message.stop_reason} model=${message.model} searches=${queries.length} results=${results} searchErrors=${searchErrors} textChars=${textChars} in=${u.input_tokens} out=${u.output_tokens} ${ms}ms`,
+  );
+  for (const q of queries) console.log(`[bias-check]   search: ${q}`);
 }

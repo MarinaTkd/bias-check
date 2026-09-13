@@ -44,6 +44,7 @@ function clientIp(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   const ip = clientIp(req);
   if (rateLimited(ip)) {
+    console.warn(`[bias-check] rate limited ip=${ip}`);
     return NextResponse.json({ error: "Too many checks from this address. Try again in an hour." }, { status: 429 });
   }
 
@@ -57,9 +58,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(await checkClaim(claim));
   } catch (e) {
     if (e instanceof Error && e.message === "refused") {
+      console.warn(`[bias-check] refused claim=${JSON.stringify(claim.slice(0, 120))}`);
       return NextResponse.json({ error: "This claim can't be checked here." }, { status: 422 });
     }
-    console.error("checkClaim failed", e);
+    if (e instanceof Error && e.message === "incomplete") {
+      console.warn(`[bias-check] incomplete claim=${JSON.stringify(claim.slice(0, 120))}`);
+    } else {
+      console.error("[bias-check] checkClaim failed", e);
+    }
     return NextResponse.json({ error: "Research failed. Please try again." }, { status: 502 });
   }
 }
