@@ -1,82 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkClaim, type CheckResult } from "@/lib/factcheck";
+import { checkAllowed } from "@/lib/limits";
 import { saveResult } from "@/lib/results";
+import { getStore } from "@/lib/store";
 
-export const maxDuration = 300; // seconds; Vercel Hobby caps at 60 — lower this if deploying there
+export const maxDuration = 60; // the Vercel Hobby ceiling
 
-// ponytail: in-memory per-IP limiter, resets on restart and is per-instance.
-// Move to Redis/Upstash when running more than one instance.
-// O(IPs) sweep per request to evict expired entries; move to a TTL store with the Redis upgrade.
-const WINDOW_MS = 60 * 60 * 1000;
-const LIMIT = 5;
-const hits = new Map<string, number[]>();
-
-// ponytail: single-instance global cap; move with the Redis upgrade.
-const GLOBAL_LIMIT = 60;
-let globalHits: number[] = [];
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
-  globalHits = globalHits.filter((t) => now - t < WINDOW_MS);
-
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= LIMIT || globalHits.length >= GLOBAL_LIMIT) {
-    hits.set(ip, recent); // drop expired timestamps for this IP
-    return true;
-  }
-  recent.push(now);
-  hits.set(ip, recent);
-  globalHits.push(now);
-  return false;
-}
-
-// ponytail: in-memory result cache so repeated claims cost nothing; per-instance, lost on
-// restart. Move to a shared store alongside the rate limiter.
-const CACHE_MAX = 500;
 type CheckResponse = CheckResult & { id: string };
-const cache = new Map<string, CheckResponse>();
+
+const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60;
+
 function cacheKey(claim: string) {
-  return claim.toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "").trim();
+  return `cache:${claim.toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "").trim()}`;
 }
 
+// Vercel sets x-forwarded-for; its last entry is the one Vercel itself observed, so a client
+// cannot mint a fresh allowance by sending a header of its own.
 function clientIp(req: NextRequest): string {
   const realIp = req.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const parts = forwardedFor.split(",").map((s) => s.trim()).filter(Boolean);
-    if (parts.length > 0) return parts[parts.length - 1];
-  }
-  return "unknown";
+  const parts = (req.headers.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return parts.at(-1) ?? "unknown";
 }
 
-export async function POST(req: NextRequest) {
-  const ip = clientIp(req);
-  if (rateLimited(ip)) {
-    console.warn(`[bias-check] rate limited ip=${ip}`);
-    return NextResponse.json({ error: "Too many checks from this address. Try again in an hour." }, { status: 429 });
-  }
+const LIMIT_MESSAGE = {
+  ip: "You've used your three checks for today. Come back tomorrow.",
+  global: "The site has hit its daily limit. Try again tomorrow.",
+  budget: "This month's research budget is spent. The site reopens next month.",
+} as const;
 
+export async function POST(req: NextRequest) {
+  const store = getStore();
   const body = await req.json().catch(() => null);
   const claim = typeof body?.claim === "string" ? body.claim.trim() : "";
   if (claim.length < 3 || claim.length > 500) {
     return NextResponse.json({ error: "Claim must be 3–500 characters." }, { status: 400 });
   }
 
+  // Cached claims cost nothing, so they are served before any limit is counted.
   const key = cacheKey(claim);
-  const hit = cache.get(key);
+  const hit = await store.get<CheckResponse>(key);
   if (hit) {
     console.log(`[bias-check] cache hit claim=${JSON.stringify(claim.slice(0, 120))}`);
     return NextResponse.json(hit);
   }
 
+  const allowed = await checkAllowed(clientIp(req), store);
+  if (!allowed.ok) {
+    console.warn(`[bias-check] refused by ${allowed.reason} limit`);
+    return NextResponse.json({ error: LIMIT_MESSAGE[allowed.reason] }, { status: 429 });
+  }
+
   try {
     const result = await checkClaim(claim);
-    const id = await saveResult(claim, result);
+    const id = await saveResult(claim, result, store);
     const response: CheckResponse = { ...result, id };
-    if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
-    cache.set(key, response);
+    await store.set(key, response, CACHE_TTL_SECONDS);
     return NextResponse.json(response);
   } catch (e) {
     if (e instanceof Error && e.message === "refused") {
