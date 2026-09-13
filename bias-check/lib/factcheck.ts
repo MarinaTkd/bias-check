@@ -59,10 +59,12 @@ Then a blank line, then 2 to 5 short paragraphs of plain prose. No markdown, no 
 
 Focus the summary on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, say so plainly and mark it TRUE; do not invent doubt. If the claim is a matter of opinion or cannot be checked, mark it UNVERIFIABLE and explain why. Be direct, specific and non-judgemental about the reader.`;
 
+// Throws Error("refused") if the model declined the request, or Error("incomplete") if
+// research was still paused after the continuation cap (see below).
 export async function checkClaim(claim: string): Promise<CheckResult> {
   const client = new Anthropic();
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: claim }];
-  let message: Anthropic.Beta.BetaMessage | undefined;
+  let message!: Anthropic.Beta.BetaMessage;
 
   // pause_turn: the server-side search loop hit its iteration cap; resend with the
   // assistant turn appended and it resumes. Cap continuations so a runaway can't loop forever.
@@ -84,7 +86,8 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
     messages.push({ role: "assistant", content: message.content });
   }
 
-  if (!message || message.stop_reason === "refusal") throw new Error("refused");
+  if (message.stop_reason === "refusal") throw new Error("refused");
+  if (message.stop_reason === "pause_turn") throw new Error("incomplete");
 
   const text = message.content
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
