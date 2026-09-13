@@ -27,11 +27,11 @@ export const TRUSTED_DOMAINS: string[] = [
 ];
 
 export function parseVerdict(text: string): { verdict: Verdict; summary: string } {
-  const m = text.match(/^[\s*#>]*verdict:\s*([a-z][a-z ]*?)[*.!:\s]*(?:\r?\n|$)/i);
-  if (!m) return { verdict: "UNVERIFIABLE", summary: text.trim() };
+  const m = text.match(/^[\s*#>]*verdict:\s*([a-z][a-z ]*?)[*.!:\s]*(?:\r?\n|$)/im);
+  if (!m || m.index === undefined) return { verdict: "UNVERIFIABLE", summary: text.trim() };
   const word = m[1].trim().toUpperCase().replace(/\s+/g, " ");
   const verdict = (VERDICTS as string[]).includes(word) ? (word as Verdict) : "UNVERIFIABLE";
-  return { verdict, summary: text.slice(m[0].length).trim() };
+  return { verdict, summary: text.slice(m.index + m[0].length).trim() };
 }
 
 type CitationLike = { type: string; url?: string; title?: string | null; cited_text?: string };
@@ -55,13 +55,14 @@ Research it with the web_search tool. Only the sources the tool returns are perm
 
 Then answer in this exact shape:
 Line 1: "VERDICT: X" where X is exactly one of FALSE, MOSTLY FALSE, MIXED, MOSTLY TRUE, TRUE, UNVERIFIABLE.
-Then a blank line, then 2 to 5 short paragraphs of plain prose. No markdown, no headings, no bullet lists.
+Then a blank line, then 2 to 5 short paragraphs of plain prose.
 Use no markdown anywhere in the reply, including the verdict line: no asterisks, bold, headings or bullets.
 
 Focus the summary on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, say so plainly and mark it TRUE; do not invent doubt. If the claim is a matter of opinion or cannot be checked, mark it UNVERIFIABLE and explain why. Be direct, specific and non-judgemental about the reader.`;
 
 // Throws Error("refused") if the model declined the request, or Error("incomplete") if
-// research was still paused after the continuation cap (see below).
+// research was still pausing/compacting after the continuation cap, hit max_tokens or the
+// context window limit, or produced no text at all.
 export async function checkClaim(claim: string): Promise<CheckResult> {
   const client = new Anthropic();
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: claim }];
@@ -93,6 +94,7 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
   if (message.stop_reason === "refusal") throw new Error("refused");
   if (
     message.stop_reason === "pause_turn" ||
+    message.stop_reason === "compaction" ||
     message.stop_reason === "max_tokens" ||
     message.stop_reason === "model_context_window_exceeded"
   ) {

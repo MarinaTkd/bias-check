@@ -95,3 +95,15 @@ test("parseVerdict handles empty input", () => {
   assert.equal(r.verdict, "UNVERIFIABLE");
   assert.equal(r.summary, "");
 });
+
+test("parseVerdict finds the verdict line after preamble text from a resumed turn", () => {
+  const r = parseVerdict("Let me look into that.\n\nVERDICT: FALSE\nBody.");
+  assert.equal(r.verdict, "FALSE");
+  assert.equal(r.summary, "Body.");
+});
+
+test("parseVerdict does not match a paragraph that merely starts with the word Verdict", () => {
+  const r = parseVerdict("Verdict aside, this is prose.\nMore.");
+  assert.equal(r.verdict, "UNVERIFIABLE");
+  assert.equal(r.summary, "Verdict aside, this is prose.\nMore.");
+});
