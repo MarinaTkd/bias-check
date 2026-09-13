@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkClaim, type CheckResult } from "@/lib/factcheck";
+import { saveResult } from "@/lib/results";
 
 export const maxDuration = 300; // seconds; Vercel Hobby caps at 60 — lower this if deploying there
 
@@ -33,7 +34,8 @@ function rateLimited(ip: string): boolean {
 // ponytail: in-memory result cache so repeated claims cost nothing; per-instance, lost on
 // restart. Move to a shared store alongside the rate limiter.
 const CACHE_MAX = 500;
-const cache = new Map<string, CheckResult>();
+type CheckResponse = CheckResult & { id: string };
+const cache = new Map<string, CheckResponse>();
 function cacheKey(claim: string) {
   return claim.toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "").trim();
 }
@@ -71,9 +73,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await checkClaim(claim);
+    const id = await saveResult(claim, result);
+    const response: CheckResponse = { ...result, id };
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
-    cache.set(key, result);
-    return NextResponse.json(result);
+    cache.set(key, response);
+    return NextResponse.json(response);
   } catch (e) {
     if (e instanceof Error && e.message === "refused") {
       console.warn(`[bias-check] refused claim=${JSON.stringify(claim.slice(0, 120))}`);
