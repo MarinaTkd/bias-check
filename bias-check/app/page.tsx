@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { CheckResult, Verdict } from "@/lib/factcheck";
+import { TRUSTED_DOMAINS, TRUSTED_SOURCES } from "@/lib/domains";
 
 // How the pen marks the claim for each verdict: the colour token and the gesture.
 const MARK: Record<Verdict, { color: string; gesture: string }> = {
@@ -130,10 +131,23 @@ export default function Page() {
       </section>
 
       {loading && (
-        <p className="mt-10 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft">
-          <span className="ellipsis">Reading trusted sources</span>
-          <span className="ml-3 normal-case tracking-normal text-ink-faint">usually under a minute</span>
-        </p>
+        <aside className="mt-8 max-w-[38rem]" aria-busy="true">
+          <div className="rule-pulse h-0.5 w-full bg-pen" />
+          <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft">
+            <span className="ellipsis">Reading trusted sources</span>
+            <span className="ml-3 normal-case tracking-normal text-ink-faint">typically 10 to 20 seconds</span>
+          </p>
+          {/* Fill the wait with the trust model: exactly what is being searched, and nothing else. */}
+          <dl className="mt-5 grid gap-y-3 text-sm leading-relaxed sm:grid-cols-[12rem_1fr] sm:gap-x-6">
+            {TRUSTED_SOURCES.map((g) => (
+              <Fragment key={g.category}>
+                <dt className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-ink-soft sm:pt-0.5">{g.category}</dt>
+                <dd className="text-ink-soft">{g.domains.join(" · ")}</dd>
+              </Fragment>
+            ))}
+          </dl>
+          <p className="mt-5 font-mono text-xs text-ink-faint">{TRUSTED_DOMAINS.length} domains. Nothing outside this list is searched.</p>
+        </aside>
       )}
 
       {error && (

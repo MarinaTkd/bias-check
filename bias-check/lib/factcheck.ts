@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { TRUSTED_DOMAINS } from "./domains.ts";
 
 export type Verdict = "FALSE" | "MOSTLY FALSE" | "MIXED" | "MOSTLY TRUE" | "TRUE" | "UNVERIFIABLE";
 export type Source = { url: string; title: string; quote: string };
@@ -8,23 +9,7 @@ export type CheckResult = { verdict: Verdict; summary: string; segments: Segment
 
 const VERDICTS: Verdict[] = ["FALSE", "MOSTLY FALSE", "MIXED", "MOSTLY TRUE", "TRUE", "UNVERIFIABLE"];
 
-// Edit this list to change what counts as trustworthy. Subdomains are covered automatically.
-export const TRUSTED_DOMAINS: string[] = [
-  // Health & science agencies
-  "who.int", "cdc.gov", "nih.gov", "fda.gov", "ecdc.europa.eu", "nhs.uk",
-  "nasa.gov", "noaa.gov", "epa.gov", "usgs.gov", "ipcc.ch", "esa.int",
-  // Peer-reviewed publishers & indexes
-  "nature.com", "science.org", "thelancet.com", "nejm.org", "bmj.com", "jamanetwork.com",
-  "cochranelibrary.com", "plos.org", "sciencedirect.com", "springer.com", "wiley.com",
-  "cell.com", "pnas.org", "arxiv.org", "ncbi.nlm.nih.gov",
-  // Statistics & international bodies
-  "un.org", "worldbank.org", "imf.org", "oecd.org", "ourworldindata.org",
-  "census.gov", "bls.gov", "ons.gov.uk", "eurostat.ec.europa.eu", "europa.eu",
-  // Reference & research institutions
-  "britannica.com", "pewresearch.org", "rand.org", "brookings.edu",
-  // Fact-checkers
-  "snopes.com", "factcheck.org", "politifact.com", "fullfact.org",
-];
+export { TRUSTED_DOMAINS, TRUSTED_SOURCES } from "./domains.ts";
 
 // bodyStart is the offset in `text` where the summary begins (just after the verdict line).
 export function parseVerdict(text: string): { verdict: Verdict; summary: string; bodyStart: number } {

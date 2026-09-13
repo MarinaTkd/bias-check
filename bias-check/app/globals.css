@@ -81,6 +81,11 @@ textarea:focus-visible {
   animation: fade 400ms 900ms both;
 }
 
+/* The rule under the claim breathes while sources are being read. */
+.rule-pulse {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
 .ellipsis::after {
   content: "…";
   display: inline-block;
@@ -100,6 +105,15 @@ textarea:focus-visible {
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
   }
 }
 @keyframes dots {
@@ -127,7 +141,12 @@ textarea:focus-visible {
   .stamp {
     animation: none;
   }
-  .ellipsis::after {
+  /* The rule under the claim breathes while sources are being read. */
+.rule-pulse {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+.ellipsis::after {
     animation: none;
     content: "…";
   }
