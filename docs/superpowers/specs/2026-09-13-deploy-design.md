@@ -65,7 +65,7 @@ A custom domain, analytics, a database admin UI, and any migration of the local 
 
 ## Constraints
 
-- Root directory on Vercel is `bias-check`; the repository root holds `docs/` as well.
+- The app sits at the repository root, alongside `docs/`; no Vercel root directory setting is needed.
 - One new dependency: `@upstash/redis`. No others.
 - Tests use `node:test` and `node:assert/strict` only, and must run with no Redis credentials present.
 - `.env.local` and `data/` must never be committed.

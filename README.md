@@ -75,8 +75,9 @@ asked, and anything other than a clear match is treated as a miss. Four limits a
 
 1. Create a Redis database at [console.upstash.com](https://console.upstash.com) and copy its REST
    URL and token.
-2. Push this repository to GitHub, then import it at [vercel.com/new](https://vercel.com/new) and
-   **set the root directory to `bias-check`**.
+2. Push this repository to GitHub, then import it at [vercel.com/new](https://vercel.com/new).
+   The app lives at the repository root, so there is no root directory to configure and Vercel
+   detects Next.js on its own.
 3. Add `ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` as environment
    variables for all environments, plus any limits you want to change.
 4. Deploy, then set `NEXT_PUBLIC_SITE_URL` to the address Vercel gives you and redeploy, so shared
