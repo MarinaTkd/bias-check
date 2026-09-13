@@ -72,30 +72,32 @@ export default function Page() {
 
       {error && <p role="alert" className="mt-6 rounded bg-red-50 p-3 text-red-800">{error}</p>}
 
-      {result && (
-        <section className="mt-8" aria-live="polite">
-          <span className={`inline-block rounded px-3 py-1 text-sm font-bold ${VERDICT_STYLE[result.verdict]}`}>
-            {result.verdict}
-          </span>
-          <div className="mt-4 whitespace-pre-wrap leading-relaxed">{result.summary}</div>
+      <section className="mt-8" aria-live="polite">
+        {result && (
+          <>
+            <span className={`inline-block rounded px-3 py-1 text-sm font-bold ${VERDICT_STYLE[result.verdict]}`}>
+              {result.verdict}
+            </span>
+            <div className="mt-4 whitespace-pre-wrap leading-relaxed">{result.summary}</div>
 
-          {result.sources.length > 0 && (
-            <>
-              <h2 className="mt-8 text-xl font-semibold">Sources</h2>
-              <ol className="mt-3 list-decimal space-y-4 pl-5">
-                {result.sources.map((s) => (
-                  <li key={s.url}>
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-medium underline">
-                      {s.title}
-                    </a>
-                    {s.quote && <blockquote className="mt-1 border-l-2 pl-3 text-sm text-gray-600">&ldquo;{s.quote}&rdquo;</blockquote>}
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-        </section>
-      )}
+            {result.sources.length > 0 && (
+              <>
+                <h2 className="mt-8 text-xl font-semibold">Sources</h2>
+                <ol className="mt-3 list-decimal space-y-4 pl-5">
+                  {result.sources.map((s) => (
+                    <li key={s.url}>
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-medium underline">
+                        {s.title}
+                      </a>
+                      {s.quote && <blockquote className="mt-1 border-l-2 pl-3 text-sm text-gray-600">&ldquo;{s.quote}&rdquo;</blockquote>}
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }

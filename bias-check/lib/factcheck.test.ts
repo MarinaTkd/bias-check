@@ -77,3 +77,21 @@ test("parseVerdict handles CRLF line endings", () => {
   assert.equal(r.verdict, "MOSTLY FALSE");
   assert.equal(r.summary, "Body.");
 });
+
+test("parseVerdict tolerates markdown bold around the verdict line", () => {
+  const r = parseVerdict("**VERDICT: FALSE**\n\nBody.");
+  assert.equal(r.verdict, "FALSE");
+  assert.equal(r.summary, "Body.");
+});
+
+test("parseVerdict tolerates a markdown heading before the verdict line", () => {
+  const r = parseVerdict("# Verdict: mixed\nBody.");
+  assert.equal(r.verdict, "MIXED");
+  assert.equal(r.summary, "Body.");
+});
+
+test("parseVerdict handles empty input", () => {
+  const r = parseVerdict("");
+  assert.equal(r.verdict, "UNVERIFIABLE");
+  assert.equal(r.summary, "");
+});

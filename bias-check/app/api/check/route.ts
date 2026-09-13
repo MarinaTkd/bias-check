@@ -10,21 +10,39 @@ const WINDOW_MS = 60 * 60 * 1000;
 const LIMIT = 5;
 const hits = new Map<string, number[]>();
 
+// ponytail: single-instance global cap; move with the Redis upgrade.
+const GLOBAL_LIMIT = 60;
+let globalHits: number[] = [];
+
 function rateLimited(ip: string): boolean {
   const now = Date.now();
   for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
+  globalHits = globalHits.filter((t) => now - t < WINDOW_MS);
+
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= LIMIT) {
+  if (recent.length >= LIMIT || globalHits.length >= GLOBAL_LIMIT) {
     hits.set(ip, recent); // drop expired timestamps for this IP
     return true;
   }
   recent.push(now);
   hits.set(ip, recent);
+  globalHits.push(now);
   return false;
 }
 
+function clientIp(req: NextRequest): string {
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const parts = forwardedFor.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
+  return "unknown";
+}
+
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIp(req);
   if (rateLimited(ip)) {
     return NextResponse.json({ error: "Too many checks from this address. Try again in an hour." }, { status: 429 });
   }

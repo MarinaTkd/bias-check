@@ -27,7 +27,7 @@ export const TRUSTED_DOMAINS: string[] = [
 ];
 
 export function parseVerdict(text: string): { verdict: Verdict; summary: string } {
-  const m = text.match(/^\s*verdict:\s*([a-z][a-z ]*?)[.!:]*\s*(?:\r?\n|$)/i);
+  const m = text.match(/^[\s*#>]*verdict:\s*([a-z][a-z ]*?)[*.!:\s]*(?:\r?\n|$)/i);
   if (!m) return { verdict: "UNVERIFIABLE", summary: text.trim() };
   const word = m[1].trim().toUpperCase().replace(/\s+/g, " ");
   const verdict = (VERDICTS as string[]).includes(word) ? (word as Verdict) : "UNVERIFIABLE";
@@ -56,6 +56,7 @@ Research it with the web_search tool. Only the sources the tool returns are perm
 Then answer in this exact shape:
 Line 1: "VERDICT: X" where X is exactly one of FALSE, MOSTLY FALSE, MIXED, MOSTLY TRUE, TRUE, UNVERIFIABLE.
 Then a blank line, then 2 to 5 short paragraphs of plain prose. No markdown, no headings, no bullet lists.
+Use no markdown anywhere in the reply, including the verdict line: no asterisks, bold, headings or bullets.
 
 Focus the summary on the strongest evidence AGAINST the claim, because the reader is checking their own bias. If the evidence clearly supports the claim, say so plainly and mark it TRUE; do not invent doubt. If the claim is a matter of opinion or cannot be checked, mark it UNVERIFIABLE and explain why. Be direct, specific and non-judgemental about the reader.`;
 
@@ -64,10 +65,12 @@ Focus the summary on the strongest evidence AGAINST the claim, because the reade
 export async function checkClaim(claim: string): Promise<CheckResult> {
   const client = new Anthropic();
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: claim }];
+  const blocks: Anthropic.Beta.BetaContentBlock[] = [];
   let message!: Anthropic.Beta.BetaMessage;
 
-  // pause_turn: the server-side search loop hit its iteration cap; resend with the
-  // assistant turn appended and it resumes. Cap continuations so a runaway can't loop forever.
+  // pause_turn/compaction: the server-side search loop hit its iteration cap or compacted
+  // context; resend with the assistant turn appended and it resumes. Cap continuations so a
+  // runaway can't loop forever. Content from every continuation is kept, not just the last.
   for (let attempt = 0; attempt < 4; attempt++) {
     message = await client.beta.messages
       .stream({
@@ -82,17 +85,25 @@ export async function checkClaim(claim: string): Promise<CheckResult> {
         fallbacks: "default",
       })
       .finalMessage();
-    if (message.stop_reason !== "pause_turn") break;
+    blocks.push(...message.content);
+    if (message.stop_reason !== "pause_turn" && message.stop_reason !== "compaction") break;
     messages.push({ role: "assistant", content: message.content });
   }
 
   if (message.stop_reason === "refusal") throw new Error("refused");
-  if (message.stop_reason === "pause_turn") throw new Error("incomplete");
+  if (
+    message.stop_reason === "pause_turn" ||
+    message.stop_reason === "max_tokens" ||
+    message.stop_reason === "model_context_window_exceeded"
+  ) {
+    throw new Error("incomplete");
+  }
 
-  const text = message.content
+  const text = blocks
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
     .map((b) => b.text)
     .join("");
+  if (!text.trim()) throw new Error("incomplete");
   const { verdict, summary } = parseVerdict(text);
-  return { verdict, summary, sources: extractSources(message.content) };
+  return { verdict, summary, sources: extractSources(blocks) };
 }
