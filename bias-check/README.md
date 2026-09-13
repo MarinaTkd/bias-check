@@ -1,7 +1,7 @@
 # Bias Check
 
 Type a claim you believe. The site researches it against an allow-list of trustworthy sources
-(peer-reviewed journals, health and science agencies, statistics offices, wire services,
+(peer-reviewed journals, health and science agencies, statistics offices,
 fact-checkers) and returns a verdict, a plain-language summary focused on the evidence against
 the claim, and the sources it cited. If the claim is right, it says so.
 

@@ -20,8 +20,6 @@ export const TRUSTED_DOMAINS: string[] = [
   "census.gov", "bls.gov", "ons.gov.uk", "eurostat.ec.europa.eu", "europa.eu",
   // Reference & research institutions
   "britannica.com", "pewresearch.org", "rand.org", "brookings.edu",
-  // Wire services & public broadcasters
-  "reuters.com", "apnews.com", "bbc.com", "bbc.co.uk",
   // Fact-checkers
   "snopes.com", "factcheck.org", "politifact.com", "fullfact.org",
 ];
