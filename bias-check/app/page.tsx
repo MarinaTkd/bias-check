@@ -120,9 +120,6 @@ export default function Page() {
                   <path d="M40 114h96" />
                   <path d="M28 102l12 12-12 12M148 102l-12 12 12 12" />
                 </g>
-                <text x="88" y="160" textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="var(--faint)" letterSpacing="1.5">
-                  SAME LENGTH
-                </text>
               </svg>
             </div>
             <textarea
