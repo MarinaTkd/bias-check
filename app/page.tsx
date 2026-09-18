@@ -69,6 +69,8 @@ export default function Page({
       else {
         setResult(data);
         setResultId(typeof data.id === "string" ? data.id : null);
+        // Give the result its own address, so reload, bookmark and copy-the-URL all work.
+        if (typeof data.id === "string") history.replaceState(null, "", `/r/${data.id}`);
         setMatchedClaim(typeof data.matchedClaim === "string" ? data.matchedClaim : null);
       }
     } catch {
@@ -118,6 +120,7 @@ export default function Page({
   }
 
   function reset() {
+    history.replaceState(null, "", "/");
     setClaim("");
     setChecked(null);
     setResult(null);
